@@ -7,18 +7,32 @@ import pl.edu.pg.bsk.exceptions.EncryptionFailedException;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
 import java.security.InvalidKeyException;
-import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 
 public class Encryption {
 	@Getter
 	@Setter
-	private Key key;
+	private SecretKey key;
 
-	public Encryption(Key key) {
+	public Encryption(SecretKey key) {
 		this.key = key;
+	}
+
+	public static SecretKey getRandomSecureKey() {
+		KeyGenerator generator;
+		try {
+			generator = KeyGenerator.getInstance("AES");
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+			return null;
+		}
+
+		generator.init(128);
+		return generator.generateKey();
 	}
 
 	public byte[] encrypt(byte[] data, EncryptionMode mode) throws EncryptionFailedException {

@@ -1,11 +1,11 @@
 package pl.edu.pg.bsk.encryption;
 
 public enum EncryptionMode {
-	AES_ECB("AES/ECB"),
-	AES_CBC("AES/CBC"),
-	AES_CFB("AES/CFB"),
-	AES_OFB("AES/OFB"),
-	AES_CTR("AES/CTR");
+	AES_ECB("AES/ECB/PKCS5Padding"),
+	AES_CBC("AES/CBC/PKCS5Padding"),
+	AES_CFB("AES/CFB/PKCS5Padding"),
+	AES_OFB("AES/OFB/PKCS5Padding"),
+	AES_CTR("AES/CTR/PKCS5Padding");
 
 	private final String mode;
 
