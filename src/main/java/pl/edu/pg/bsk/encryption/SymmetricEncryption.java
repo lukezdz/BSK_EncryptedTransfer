@@ -17,12 +17,15 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Optional;
 
-public class Encryption {
+public class SymmetricEncryption {
+	private static final String ENCRYPTION = "Encryption";
+	private static final String DECRYPTION = "Decryption";
+
 	@Getter
 	@Setter
 	private SecretKey key;
 
-	public Encryption(SecretKey key) {
+	public SymmetricEncryption(SecretKey key) {
 		this.key = key;
 	}
 
@@ -46,18 +49,18 @@ public class Encryption {
 	}
 
 	public byte[] encrypt(byte[] data, EncryptionMode mode, Optional<IvParameterSpec> iv) throws EncryptionFailedException {
-		Cipher cipher = getCipherInstance(mode, Cipher.ENCRYPT_MODE, "Encryption", iv);
-		return performOperation(cipher, data, "Encryption");
+		Cipher cipher = getCipherInstance(mode, Cipher.ENCRYPT_MODE, iv);
+		return performOperation(cipher, data, ENCRYPTION);
 	}
 
 	public byte[] decrypt(byte[] data, EncryptionMode mode, Optional<IvParameterSpec> iv) throws EncryptionFailedException {
-		Cipher cipher = getCipherInstance(mode, Cipher.DECRYPT_MODE, "Decryption", iv);
-		return performOperation(cipher, data, "Decryption");
+		Cipher cipher = getCipherInstance(mode, Cipher.DECRYPT_MODE, iv);
+		return performOperation(cipher, data, DECRYPTION);
 	}
 
-	private Cipher getCipherInstance(EncryptionMode algorithm, int cipherMode,
-									 String operation, Optional<IvParameterSpec> iv) throws EncryptionFailedException {
+	private Cipher getCipherInstance(EncryptionMode algorithm, int cipherMode, Optional<IvParameterSpec> iv) throws EncryptionFailedException {
 		Cipher cipher;
+		String operation = cipherMode == Cipher.ENCRYPT_MODE ? ENCRYPTION : DECRYPTION;
 
 		try {
 			cipher = Cipher.getInstance(algorithm.getMode());
