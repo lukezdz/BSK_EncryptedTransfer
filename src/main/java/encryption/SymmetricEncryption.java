@@ -1,15 +1,10 @@
-package pl.edu.pg.bsk.encryption;
+package encryption;
 
 import lombok.Getter;
 import lombok.Setter;
-import pl.edu.pg.bsk.exceptions.EncryptionFailedException;
+import exceptions.EncryptionFailedException;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.KeyGenerator;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.SecretKey;
+import javax.crypto.*;
 import javax.crypto.spec.IvParameterSpec;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;

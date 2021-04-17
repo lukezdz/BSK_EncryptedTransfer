@@ -1,8 +1,8 @@
-package pl.edu.pg.bsk.encryption;
+package encryption;
 
 import org.junit.Test;
-import pl.edu.pg.bsk.exceptions.EncryptionFailedException;
-import pl.edu.pg.bsk.exceptions.EncryptionInstanceCreationException;
+import exceptions.EncryptionFailedException;
+import exceptions.EncryptionInstanceCreationException;
 
 import java.nio.charset.StandardCharsets;
 

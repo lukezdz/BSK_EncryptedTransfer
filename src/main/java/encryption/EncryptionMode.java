@@ -1,4 +1,4 @@
-package pl.edu.pg.bsk.encryption;
+package encryption;
 
 import lombok.Getter;
 

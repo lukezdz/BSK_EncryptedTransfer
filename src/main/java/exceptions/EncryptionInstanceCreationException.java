@@ -1,4 +1,4 @@
-package pl.edu.pg.bsk.exceptions;
+package exceptions;
 
 public class EncryptionInstanceCreationException extends Exception {
 	private String message;

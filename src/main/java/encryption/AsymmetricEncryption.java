@@ -1,20 +1,14 @@
-package pl.edu.pg.bsk.encryption;
+package encryption;
 
 import lombok.Getter;
-import pl.edu.pg.bsk.exceptions.EncryptionFailedException;
-import pl.edu.pg.bsk.exceptions.EncryptionInstanceCreationException;
+import exceptions.EncryptionFailedException;
+import exceptions.EncryptionInstanceCreationException;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
-import java.security.InvalidKeyException;
-import java.security.Key;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
+import java.security.*;
 
 public class AsymmetricEncryption {
 	private static final String RSA = "RSA";

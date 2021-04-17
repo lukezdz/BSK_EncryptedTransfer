@@ -1,5 +1,3 @@
-package pl.edu.pg.bsk;
-
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -20,9 +18,7 @@ public class UIController implements Initializable {
     public void initialize(URL url, ResourceBundle resourceBundle) {
 
         chooseButton.setOnAction(this::handleChooseButton); //wybranie pliku
-
         textField.setOnAction(this::textInputButton); //wpisanie tekstu w polu tekstowym
-
         ECBButton.setOnAction(this::handleECBButton);
         CBCButton.setOnAction(this::handleCBCButton);
         CFBButton.setOnAction(this::handleCFBButton);
@@ -33,7 +29,6 @@ public class UIController implements Initializable {
         chooseKeysButton.setOnAction(this::handleChooseKeysButton); //wybranie pary kluczy
 
         executorService = new ForkJoinPool();
-
         chosenFile = null;
     }
 
@@ -43,7 +38,6 @@ public class UIController implements Initializable {
     private Button chooseButton;
     @FXML
     private TextField textField;
-
     @FXML
     private Button ECBButton;
     @FXML
