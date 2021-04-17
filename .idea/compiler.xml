@@ -7,6 +7,8 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
+        <module name="BSK_GUI" />
+        <module name="BSK_GUI — kopia" />
         <module name="BSK_EncryptedTransfer" />
       </profile>
     </annotationProcessing>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane prefHeight="518.0" prefWidth="734.0" xmlns="http://javafx.com/javafx/8.0.141"
+            xmlns:fx="http://javafx.com/fxml/1" fx:controller="UIController">
+    <children>
+        <Label fx:id="prompt" layoutX="19.0" layoutY="23.0" text="BSK project 1" AnchorPane.leftAnchor="19.0"
+               AnchorPane.topAnchor="23.0"/>
+        <Button fx:id="chooseButton" layoutX="19.0" layoutY="361.0" mnemonicParsing="false" prefHeight="18.0"
+                prefWidth="82.0" text="Choose Files" AnchorPane.bottomAnchor="419.0" AnchorPane.leftAnchor="19.0"/>
+        <TextField fx:id="textField" layoutX="24.0" layoutY="479.0" prefHeight="68.0" prefWidth="374.0" text="Text..."
+                   AnchorPane.bottomAnchor="340.0" AnchorPane.leftAnchor="24.0"/>
+        <Button fx:id="ECBButton" layoutX="19.0" layoutY="361.0" mnemonicParsing="false" prefHeight="26.0"
+                prefWidth="82.0" text="ECB" AnchorPane.bottomAnchor="296.0" AnchorPane.leftAnchor="19.0"/>
+        <Button fx:id="CBCButton" layoutX="19.0" layoutY="479.0" mnemonicParsing="false" prefHeight="18.0"
+                prefWidth="82.0" text="CBC" AnchorPane.bottomAnchor="259.0" AnchorPane.leftAnchor="19.0"/>
+        <Button fx:id="CFBButton" layoutX="19.0" layoutY="361.0" mnemonicParsing="false" prefHeight="26.0"
+                prefWidth="82.0" text="CFB" AnchorPane.bottomAnchor="182.0" AnchorPane.leftAnchor="19.0"/>
+        <Button fx:id="OFBButton" layoutX="19.0" layoutY="477.4" mnemonicParsing="false" prefHeight="26.0"
+                prefWidth="82.0" text="OFB" AnchorPane.bottomAnchor="223.0" AnchorPane.leftAnchor="19.0"/>
+        <Button fx:id="CTRButton" layoutX="19.0" layoutY="479.0" mnemonicParsing="false" prefHeight="26.0"
+                prefWidth="82.0" text="CTR" AnchorPane.bottomAnchor="146.0" AnchorPane.leftAnchor="19.0"/>
+        <Button fx:id="generateKeysButton" layoutX="25.0" layoutY="479.0" mnemonicParsing="false" prefHeight="26.0"
+                prefWidth="174.0" text="Generate keys" AnchorPane.bottomAnchor="102.0" AnchorPane.leftAnchor="19.0"/>
+        <Button fx:id="chooseKeysButton" layoutX="521.0" layoutY="361.0" mnemonicParsing="false" prefHeight="26.0"
+                prefWidth="174.0" text="Choose keys" AnchorPane.bottomAnchor="66.0" AnchorPane.leftAnchor="19.0"/>
+    </children>
+</AnchorPane>
