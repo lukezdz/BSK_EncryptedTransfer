@@ -15,4 +15,8 @@ public enum EncryptionMode {
 	EncryptionMode(String mode) {
 		this.mode = mode;
 	}
+
+	public boolean needsInitializationVector() {
+		return !this.mode.equals(AES_ECB.mode);
+	}
 }

@@ -25,7 +25,12 @@ public class AsymmetricEncryption {
 	private final PublicKey publicKey;
 	private final PrivateKey privateKey;
 
-	AsymmetricEncryption() throws EncryptionInstanceCreationException {
+	public AsymmetricEncryption(KeyPair pair) {
+		publicKey = pair.getPublic();
+		privateKey = pair.getPrivate();
+	}
+
+	public AsymmetricEncryption() throws EncryptionInstanceCreationException {
 		KeyPairGenerator factory;
 		try {
 			factory = KeyPairGenerator.getInstance(RSA);
