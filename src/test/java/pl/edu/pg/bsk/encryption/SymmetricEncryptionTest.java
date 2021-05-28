@@ -14,7 +14,7 @@ public class SymmetricEncryptionTest {
 	public String encryptAndDecrypt(String text, EncryptionMode mode, Optional<IvParameterSpec> iv) throws EncryptionFailedException {
 		byte[] bytes = text.getBytes(StandardCharsets.UTF_8);
 
-		SymmetricEncryption encryption = new SymmetricEncryption(SymmetricEncryption.getRandomSecureKey(KeySize.K_128));
+		SymmetricEncryption encryption = new SymmetricEncryption(EncryptionUtils.getRandomSecureKey(KeySize.K_128));
 		byte[] encrypted = encryption.encrypt(bytes, mode, iv);
 		byte[] decrypted = encryption.decrypt(encrypted, mode, iv);
 		return new String(decrypted);
@@ -29,28 +29,28 @@ public class SymmetricEncryptionTest {
 
 	@Test
 	public void decryptingEncryptedDataWithCBCReturnsOriginal() throws EncryptionFailedException {
-		String decryptedString = encryptAndDecrypt(text, EncryptionMode.AES_CBC, Optional.of(SymmetricEncryption.generateInitializationVector()));
+		String decryptedString = encryptAndDecrypt(text, EncryptionMode.AES_CBC, Optional.of(EncryptionUtils.generateInitializationVector()));
 
 		assert decryptedString.equals(text);
 	}
 
 	@Test
 	public void decryptingEncryptedDataWithCFBReturnsOriginal() throws EncryptionFailedException {
-		String decryptedString = encryptAndDecrypt(text, EncryptionMode.AES_CFB, Optional.of(SymmetricEncryption.generateInitializationVector()));
+		String decryptedString = encryptAndDecrypt(text, EncryptionMode.AES_CFB, Optional.of(EncryptionUtils.generateInitializationVector()));
 
 		assert decryptedString.equals(text);
 	}
 
 	@Test
 	public void decryptingEncryptedDataWithOFBReturnsOriginal() throws EncryptionFailedException {
-		String decryptedString = encryptAndDecrypt(text, EncryptionMode.AES_OFB, Optional.of(SymmetricEncryption.generateInitializationVector()));
+		String decryptedString = encryptAndDecrypt(text, EncryptionMode.AES_OFB, Optional.of(EncryptionUtils.generateInitializationVector()));
 
 		assert decryptedString.equals(text);
 	}
 
 	@Test
 	public void decryptingEncryptedDataWithCTRReturnsOriginal() throws EncryptionFailedException {
-		String decryptedString = encryptAndDecrypt(text, EncryptionMode.AES_CTR, Optional.of(SymmetricEncryption.generateInitializationVector()));
+		String decryptedString = encryptAndDecrypt(text, EncryptionMode.AES_CTR, Optional.of(EncryptionUtils.generateInitializationVector()));
 
 		assert decryptedString.equals(text);
 	}
