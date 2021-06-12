@@ -1,5 +1,6 @@
 package pl.edu.pg.bsk;
 
+import javafx.beans.binding.Bindings;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -7,6 +8,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
@@ -15,6 +17,7 @@ import javafx.scene.control.TextArea;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import pl.edu.pg.bsk.encryption.EncryptionMode;
+import pl.edu.pg.bsk.transfer.TransferHandler;
 import pl.edu.pg.bsk.utils.ArrayObservableList;
 import pl.edu.pg.bsk.utils.KeyPairWrapper;
 
@@ -26,6 +29,8 @@ import java.util.List;
 import java.util.ResourceBundle;
 
 public class MainUIController implements Initializable {
+	private static final String NO_KEYS_SELECTED = "You have currently no keys selected.";
+
 	@FXML private ChoiceBox<EncryptionMode> modeChoiceBox;
 	@FXML private Button selectKeysButton;
 	@FXML private Button generateKeysButton;
@@ -36,6 +41,7 @@ public class MainUIController implements Initializable {
 	@FXML private Button sendButton;
 
 	private KeyPair selectedKeyPair = null;
+	private TransferHandler transferHandler = null;
 
 	@Override
 	public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -43,7 +49,13 @@ public class MainUIController implements Initializable {
 		modeChoiceBox.setItems(getModesList());
 		modeChoiceBox.setValue(EncryptionMode.AES_ECB);
 
-		keysInfoLabel.setText("You have currently no keys selected.");
+		keysInfoLabel.setText(NO_KEYS_SELECTED);
+
+		sendButton.disableProperty().bind(
+				Bindings.equal(keysInfoLabel.textProperty(), NO_KEYS_SELECTED).and(
+						Bindings.isEmpty(messageTextArea.textProperty()).or(/* make a check for any items in observable list of selected files */)
+				)
+		);
 	}
 
 	private ObservableList<EncryptionMode> getModesList() {
@@ -86,6 +98,14 @@ public class MainUIController implements Initializable {
 		if (KeyPairWrapper.getInstance().getPair() != null) {
 			keysInfoLabel.setText("You have selected a key pair.");
 			selectedKeyPair = KeyPairWrapper.getInstance().getPair();
+			try {
+				transferHandler = new TransferHandler(selectedKeyPair);
+			} catch (IOException e) {
+				Alert alert = new Alert(Alert.AlertType.ERROR);
+				alert.setHeaderText("Failed to initialize server");
+				alert.setContentText("There was a problem with creating a server to receive messages from other users. Check if your port " + TransferHandler.SERVER_PORT + " is free and can be used.");
+				alert.show();
+			}
 		}
 	}
 }

@@ -1,6 +1,9 @@
 package pl.edu.pg.bsk.transfer;
 
+import javafx.concurrent.Task;
+import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import pl.edu.pg.bsk.encryption.AsymmetricEncryption;
 import pl.edu.pg.bsk.encryption.EncryptionMode;
 import pl.edu.pg.bsk.encryption.EncryptionUtils;
@@ -14,57 +17,117 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.security.KeyFactory;
 import java.security.KeyPair;
-import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
+import java.security.spec.X509EncodedKeySpec;
+import java.time.Duration;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import org.json.simple.JSONObject;
-
-public class TransferHandler {
+public class TransferHandler extends Thread {
 	private static final int MAX_PART_SIZE = 128;
-	private static final int SERVER_PORT = 8800;
+	public static final int SERVER_PORT = 8800;
+	private static final long TIMEOUT = 5;
 
-	private final Map<InetAddress, SecretKey> sessionKeys = new HashMap<>();
+	private boolean quit = false;
+
+	private final Map<InetAddress, SessionInfo> sessionInfos = new HashMap<>();
+	private final Map<InetAddress, PublicKey> publicKeysMap = new HashMap<>();
 
 	private final SymmetricEncryption symmetricEncryption =
 			new SymmetricEncryption(EncryptionUtils.getRandomSecureKey(KeySize.K_128));
 	private final AsymmetricEncryption asymmetricEncryption;
-	private final Map<InetAddress, SessionInfo> sessionMap = new HashMap<>();
 
 	private final ServerSocket serverSocket = new ServerSocket(SERVER_PORT);
 
-	TransferHandler() throws EncryptionInstanceCreationException, IOException {
+	public TransferHandler() throws EncryptionInstanceCreationException, IOException {
 		asymmetricEncryption = new AsymmetricEncryption();
 	}
 
-	TransferHandler(KeyPair keyPair) throws IOException {
+	public TransferHandler(KeyPair keyPair) throws IOException {
 		asymmetricEncryption = new AsymmetricEncryption(keyPair);
+	}
+
+	@SneakyThrows
+	@Override
+	public void run() {
+		while (!quit) {
+			Socket clientSocket = serverSocket.accept();
+			InputStream inputStream = clientSocket.getInputStream();
+
+			TransferData.ReadTransferData readTransferData = TransferData.readTransferData(inputStream.readAllBytes());
+			Metadata metadata = readTransferData.getMetadata();
+			InetAddress address = clientSocket.getInetAddress();
+			switch (metadata.getType()) {
+				case MESSAGE: {
+					if (readTransferData.getMetadata().getTransferType() == Metadata.TransferType.REQUEST) {
+
+					}
+					break;
+				}
+				case FILE: {
+					break;
+				}
+				case HANDSHAKE: {
+					if (readTransferData.getMetadata().getHandshakePart() == 1) {
+						byte[] data = readTransferData.getData();
+						PublicKey publicKey = KeyFactory.getInstance("RSA").generatePublic(new X509EncodedKeySpec(data));
+						publicKeysMap.put(address, publicKey);
+						if (metadata.getTransferType() == Metadata.TransferType.REQUEST) {
+							byte[] response = TransferData.getPartOneHandshakeData(asymmetricEncryption.getPublicKey(), Metadata.TransferType.ANSWER);
+							clientSocket.getOutputStream().write(response);
+						}
+					}
+					else if (readTransferData.getMetadata().getHandshakePart() == 2) {
+						byte[] data = readTransferData.getData();
+						byte[] decrypted = asymmetricEncryption.decryptWithPublic(data, publicKeysMap.get(address));
+						SessionInfo sessionInfo = TransferData.parsePartTwoHandshakeData(decrypted);
+						sessionInfos.put(address, sessionInfo);
+						if (metadata.getTransferType() == Metadata.TransferType.REQUEST) {
+							byte[] responseBody = TransferData.getPartTwoHandshakeBody(sessionInfo.getSessionKey(),
+									sessionInfo.getInitializationVector(), sessionInfo.getEncryptionMode());
+							byte[] encrypted = asymmetricEncryption.encryptWithPublic(responseBody, publicKeysMap.get(address));
+							byte[] response = TransferData.getPartTwoHandshakeData(encrypted, Metadata.TransferType.ANSWER);
+							clientSocket.getOutputStream().write(response);
+						}
+					}
+					break;
+				}
+			}
+		}
+	}
+
+	public void quitServer() {
+		this.quit = true;
 	}
 
 	/**
 	 * Encrypts and sends files to provided address
-	 * @param files List containing files to be encrypted and sent
+	 * @param file File to be encrypted and sent
 	 * @param encryptionMode Mode of AES encryption to use for encrypting files
 	 * @param address Address of destination
 	 * @throws EncryptionFailedException Thrown when encryption fails
 	 * @throws TransferException Thrown when transfer fails
 	 */
-	public void sendEncryptedFiles(List<File> files, EncryptionMode encryptionMode, InetAddress address)
+	public Task<Void> sendEncryptedFile(File file, EncryptionMode encryptionMode, InetAddress address)
 			throws EncryptionFailedException, TransferException, IOException {
-		for (File file: files) {
-			// TODO: change empty optional to actual data
-			sendEncryptedData(FileUtils.readFileToByteArray(file), encryptionMode, address, Optional.empty());
-		}
+		Metadata metadata = new Metadata(Metadata.MetadataType.FILE);
+		metadata.setFilename(FilenameUtils.getName(file.getName()));
+		metadata.setFileExt(FilenameUtils.getExtension(file.getName()));
+		metadata.setFileSize(file.getTotalSpace());
+
+		return sendEncryptedData(FileUtils.readFileToByteArray(file), encryptionMode, address, metadata);
 	}
 
 	/**
@@ -75,54 +138,111 @@ public class TransferHandler {
 	 * @throws EncryptionFailedException Thrown when encryption fails
 	 * @throws TransferException Thrown when transfer fails
 	 */
-	public void sendEncryptedMessage(String message, EncryptionMode encryptionMode, InetAddress address)
+	public Task<Void> sendEncryptedMessage(String message, EncryptionMode encryptionMode, InetAddress address)
 			throws EncryptionFailedException, TransferException {
-		sendEncryptedData(message.getBytes(StandardCharsets.UTF_8), encryptionMode, address, Optional.empty());
+		Metadata metadata = new Metadata(Metadata.MetadataType.MESSAGE);
+		metadata.setTransferType(Metadata.TransferType.REQUEST);
+		return sendEncryptedData(message.getBytes(StandardCharsets.UTF_8), encryptionMode, address, metadata);
 	}
 
-	private PublicKey getDestinationPublicKey(InetAddress address) throws TransferException{
-		// Send request to provided address with question about public key
-		// Get response with public key
-		// return response
-		try {
-			Socket socket = new Socket(address, SERVER_PORT);
-			OutputStream stream = socket.getOutputStream();
-			JSONObject jsonRequest = new JSONObject();
-			jsonRequest.put("Type", "Handshake");
-			jsonRequest.put("Body", "RSAPublicKey");
-			stream.write(jsonRequest.toJSONString().getBytes());
-
-			return EncryptionUtils.generateKeyPair().getPublic();
-		} catch (IOException e) {
-			throw new TransferException("Could not obtain public key from provided address");
-		} catch (NoSuchAlgorithmException e) {
-			System.out.println(e);
-		}
-
-		return null;
-	}
-
-	private void sendEncryptedData(byte[] data, EncryptionMode encryptionMode,
-								   InetAddress address, Optional<TransferData.FileMetadata> metadata) throws EncryptionFailedException, TransferException
+	private Task<Void> sendEncryptedData(byte[] data, EncryptionMode encryptionMode,
+								   InetAddress address, Metadata metadata) throws EncryptionFailedException, TransferException
 	{
-		SessionInfo info = sessionMap.get(address);
+		SessionInfo info = sessionInfos.get(address);
+		Task<Void> handshakeTask = null;
 		if (info == null || !info.getEncryptionMode().equals(encryptionMode)) {
 			SecretKey key = EncryptionUtils.getRandomSecureKey(KeySize.K_128);
-			PublicKey publicKey = getDestinationPublicKey(address);
-			info = new SessionInfo(publicKey, key, encryptionMode);
-			sessionMap.put(address, info);
+			handshakeTask = performHandshake(address, encryptionMode);
 		}
-		symmetricEncryption.setKey(info.getSessionKey());
-		Optional<IvParameterSpec> iv = encryptionMode.needsInitializationVector() ?
-				Optional.of(EncryptionUtils.generateInitializationVector()) : Optional.empty();
-		byte[] encrypted = symmetricEncryption.encrypt(data, encryptionMode, iv);
 
+		Task<Void> finalHandshakeTask = handshakeTask;
+		Task<Void> sendingTask = new Task<Void>() {
+			@Override
+			protected Void call() throws Exception {
+				LocalTime start = LocalTime.now();
+				SessionInfo info = sessionInfos.get(address);
+				while (finalHandshakeTask == null || (info == null && finalHandshakeTask.isRunning())) {
+					info = sessionInfos.get(address);
+				}
+
+				if (finalHandshakeTask.isCancelled()) {
+					cancel();
+					throw new TransferException("Transfer failed!");
+				}
+
+				symmetricEncryption.setKey(info.getSessionKey());
+				Optional<IvParameterSpec> iv = encryptionMode.needsInitializationVector() ?
+						Optional.of(info.getInitializationVector()) : Optional.empty();
+				byte[] encrypted = symmetricEncryption.encrypt(data, encryptionMode, iv);
+
+				try {
+					Socket socket = getSocket(address);
+					OutputStream stream = socket.getOutputStream();
+					stream.write(TransferData.getTransferData(encrypted, metadata));
+				} catch (IOException e) {
+					throw new TransferException("Could not transfer data to destination");
+				}
+
+				succeeded();
+				return null;
+			}
+		};
+
+		sendingTask.run();
+		return sendingTask;
+	}
+
+	private Task<Void> performHandshake(InetAddress address, EncryptionMode encryptionMode) throws TransferException {
 		try {
-			Socket socket = sendTransferHeader(address);
+			sessionInfos.remove(address);
+			Socket socket = new Socket(address, SERVER_PORT);
 			OutputStream stream = socket.getOutputStream();
-			stream.write(TransferData.getTransferData(encryptionMode, encrypted, metadata));
+
+			byte[] handshakeData = TransferData.getPartOneHandshakeData(asymmetricEncryption.getPublicKey(), Metadata.TransferType.REQUEST);
+			stream.write(handshakeData);
+
+			Task<Void> respondingTask = new Task<Void>() {
+				@Override
+				protected Void call() throws Exception {
+					LocalTime start = LocalTime.now();
+
+					while (Duration.between(start, LocalTime.now()).toSeconds() <= TIMEOUT) {
+						PublicKey key = publicKeysMap.get(address);
+						if (key != null) {
+							updateMessage("Received public key.");
+							byte[] handshakeBody = TransferData.getPartTwoHandshakeBody(
+									EncryptionUtils.getRandomSecureKey(KeySize.K_128),
+									EncryptionUtils.generateInitializationVector(),
+									encryptionMode
+							);
+							byte[] encrypted = asymmetricEncryption.encryptWithPublic(handshakeBody, key);
+							byte[] data = TransferData.getPartTwoHandshakeData(encrypted, Metadata.TransferType.REQUEST);
+							updateMessage("Responded with session info.");
+							stream.write(data);
+
+							LocalTime responseWaitStart = LocalTime.now();
+							while (Duration.between(start, LocalTime.now()).toSeconds() <= TIMEOUT) {
+								SessionInfo info = sessionInfos.get(address);
+								if (info != null) {
+									succeeded();
+									return null;
+								}
+							}
+
+							cancel();
+							throw new TransferException("RSA Handshake timed out.");
+						}
+					}
+
+					cancel();
+					throw new TransferException("RSA Handshake timed out.");
+				}
+			};
+
+			respondingTask.run();
+			return respondingTask;
 		} catch (IOException e) {
-			throw new TransferException("Could not transfer part of data to destination");
+			throw new TransferException("Could not obtain public key from provided address");
 		}
 	}
 
@@ -147,9 +267,7 @@ public class TransferHandler {
 		return parts;
 	}
 
-	private Socket sendTransferHeader(InetAddress address) throws IOException {
-		Socket socket = new Socket(address, SERVER_PORT);
-		// TODO: Send transfer header (filename, file extension, file size, number of parts etc.)
-		return socket;
+	private Socket getSocket(InetAddress address) throws IOException {
+		return new Socket(address, SERVER_PORT);
 	}
 }

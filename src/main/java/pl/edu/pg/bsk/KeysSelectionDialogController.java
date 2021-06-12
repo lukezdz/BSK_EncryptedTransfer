@@ -112,14 +112,11 @@ public class KeysSelectionDialogController implements Initializable {
 		} catch (KeyMismatchException e) {
 			showError("Selected keys do not match. Either you have selected one wrong key, or given incorrect password for private key.\n\nPlease try again.");
 			return;
-
-
 		}
 
 		Stage stage = getStage(actionEvent);
 		KeyPairWrapper.getInstance().setPair(keys.get());
-		stage.hide();
-		// stage.close();
+		stage.close();
 	}
 
 	private PublicKey getPublicKey() throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
