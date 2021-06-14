@@ -18,6 +18,7 @@ import pl.edu.pg.bsk.encryption.SymmetricEncryption;
 import pl.edu.pg.bsk.exceptions.EncryptionFailedException;
 import pl.edu.pg.bsk.exceptions.KeyMismatchException;
 import pl.edu.pg.bsk.utils.KeyPairWrapper;
+import pl.edu.pg.bsk.utils.Utils;
 
 import javax.crypto.spec.SecretKeySpec;
 import java.io.File;
@@ -152,6 +153,8 @@ public class KeysSelectionDialogController implements Initializable {
 		Alert alert = new Alert(Alert.AlertType.ERROR);
 		alert.setHeaderText("Loading keys failed");
 		alert.setContentText(errorMessage);
+		Stage alertStage = (Stage) alert.getDialogPane().getScene().getWindow();
+		alertStage.getIcons().add(Utils.getAppIcon());
 		alert.showAndWait();
 	}
 

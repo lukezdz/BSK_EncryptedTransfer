@@ -1,6 +1,10 @@
 package pl.edu.pg.bsk.transfer;
 
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.concurrent.Task;
+import javafx.util.Pair;
+import lombok.Getter;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -36,20 +40,24 @@ import java.util.Map;
 import java.util.Optional;
 
 public class TransferHandler extends Thread {
-	private static final int MAX_PART_SIZE = 128;
 	public static final int SERVER_PORT = 8800;
+
+	private static final int MAX_PART_SIZE = 128;
 	private static final long TIMEOUT = 5;
 
-	private boolean quit = false;
+	@Getter
+	private final ObjectProperty<Task<Pair<Metadata, byte[]>>> receiveTaskProperty = new SimpleObjectProperty<>();
+	@Getter
+	private final ObjectProperty<Task<Metadata>> receiveRequestTaskProperty = new SimpleObjectProperty<>();
 
 	private final Map<InetAddress, SessionInfo> sessionInfos = new HashMap<>();
 	private final Map<InetAddress, PublicKey> publicKeysMap = new HashMap<>();
-
 	private final SymmetricEncryption symmetricEncryption =
 			new SymmetricEncryption(EncryptionUtils.getRandomSecureKey(KeySize.K_128));
 	private final AsymmetricEncryption asymmetricEncryption;
-
 	private final ServerSocket serverSocket = new ServerSocket(SERVER_PORT);
+
+	private boolean quit = false;
 
 	public TransferHandler() throws EncryptionInstanceCreationException, IOException {
 		asymmetricEncryption = new AsymmetricEncryption();
@@ -71,8 +79,14 @@ public class TransferHandler extends Thread {
 			InetAddress address = clientSocket.getInetAddress();
 			switch (metadata.getType()) {
 				case MESSAGE: {
-					if (readTransferData.getMetadata().getTransferType() == Metadata.TransferType.REQUEST) {
+					Metadata.TransferType transferType = readTransferData.getMetadata().getTransferType();
+					SessionInfo info = sessionInfos.get(address);
+					if (transferType == Metadata.TransferType.REQUEST) {
 
+					}
+					else if (transferType == Metadata.TransferType.ANSWER) {
+						Optional<IvParameterSpec> iv = info.getInitializationVector() == null ? Optional.empty() : Optional.of(info.getInitializationVector());
+						this.receiveTaskProperty.set(getReceiveAndDecryptTask(clientSocket, info.getEncryptionMode(), info.getSessionKey(), iv, metadata));
 					}
 					break;
 				}
@@ -82,10 +96,12 @@ public class TransferHandler extends Thread {
 				case HANDSHAKE: {
 					if (readTransferData.getMetadata().getHandshakePart() == 1) {
 						byte[] data = readTransferData.getData();
-						PublicKey publicKey = KeyFactory.getInstance("RSA").generatePublic(new X509EncodedKeySpec(data));
+						PublicKey publicKey = KeyFactory.getInstance("RSA").generatePublic(
+								new X509EncodedKeySpec(data));
 						publicKeysMap.put(address, publicKey);
 						if (metadata.getTransferType() == Metadata.TransferType.REQUEST) {
-							byte[] response = TransferData.getPartOneHandshakeData(asymmetricEncryption.getPublicKey(), Metadata.TransferType.ANSWER);
+							byte[] response = TransferData.getPartOneHandshakeData(
+									asymmetricEncryption.getPublicKey(), Metadata.TransferType.ANSWER);
 							clientSocket.getOutputStream().write(response);
 						}
 					}
@@ -97,8 +113,10 @@ public class TransferHandler extends Thread {
 						if (metadata.getTransferType() == Metadata.TransferType.REQUEST) {
 							byte[] responseBody = TransferData.getPartTwoHandshakeBody(sessionInfo.getSessionKey(),
 									sessionInfo.getInitializationVector(), sessionInfo.getEncryptionMode());
-							byte[] encrypted = asymmetricEncryption.encryptWithPublic(responseBody, publicKeysMap.get(address));
-							byte[] response = TransferData.getPartTwoHandshakeData(encrypted, Metadata.TransferType.ANSWER);
+							byte[] encrypted = asymmetricEncryption.encryptWithPublic(
+									responseBody, publicKeysMap.get(address));
+							byte[] response = TransferData.getPartTwoHandshakeData(
+									encrypted, Metadata.TransferType.ANSWER);
 							clientSocket.getOutputStream().write(response);
 						}
 					}
@@ -145,13 +163,12 @@ public class TransferHandler extends Thread {
 		return sendEncryptedData(message.getBytes(StandardCharsets.UTF_8), encryptionMode, address, metadata);
 	}
 
-	private Task<Void> sendEncryptedData(byte[] data, EncryptionMode encryptionMode,
-								   InetAddress address, Metadata metadata) throws EncryptionFailedException, TransferException
+	private Task<Void> sendEncryptedData(byte[] data, EncryptionMode encryptionMode, InetAddress address,
+										 Metadata metadata) throws EncryptionFailedException, TransferException
 	{
 		SessionInfo info = sessionInfos.get(address);
 		Task<Void> handshakeTask = null;
 		if (info == null || !info.getEncryptionMode().equals(encryptionMode)) {
-			SecretKey key = EncryptionUtils.getRandomSecureKey(KeySize.K_128);
 			handshakeTask = performHandshake(address, encryptionMode);
 		}
 
@@ -159,8 +176,8 @@ public class TransferHandler extends Thread {
 		Task<Void> sendingTask = new Task<Void>() {
 			@Override
 			protected Void call() throws Exception {
-				LocalTime start = LocalTime.now();
 				SessionInfo info = sessionInfos.get(address);
+				symmetricEncryption.setKey(info.getSessionKey());
 				while (finalHandshakeTask == null || (info == null && finalHandshakeTask.isRunning())) {
 					info = sessionInfos.get(address);
 				}
@@ -221,7 +238,7 @@ public class TransferHandler extends Thread {
 							stream.write(data);
 
 							LocalTime responseWaitStart = LocalTime.now();
-							while (Duration.between(start, LocalTime.now()).toSeconds() <= TIMEOUT) {
+							while (Duration.between(responseWaitStart, LocalTime.now()).toSeconds() <= TIMEOUT) {
 								SessionInfo info = sessionInfos.get(address);
 								if (info != null) {
 									succeeded();
@@ -244,6 +261,24 @@ public class TransferHandler extends Thread {
 		} catch (IOException e) {
 			throw new TransferException("Could not obtain public key from provided address");
 		}
+	}
+
+	private Task<Pair<Metadata, byte[]>> getReceiveAndDecryptTask(Socket socket, EncryptionMode mode, SecretKey key,
+											 Optional<IvParameterSpec> iv, Metadata metadata) {
+		Task<Pair<Metadata, byte[]>> receiveAndDecryptTask = new Task<Pair<Metadata, byte[]>>() {
+			@Override
+			protected Pair<Metadata, byte[]> call() throws Exception
+			{
+				symmetricEncryption.setKey(key);
+				byte[] received = socket.getInputStream().readAllBytes();
+				byte[] decrypted = symmetricEncryption.decrypt(received, mode, iv);
+
+				return new Pair<Metadata, byte[]>(metadata, decrypted);
+			}
+		};
+		receiveAndDecryptTask.run();
+
+		return receiveAndDecryptTask;
 	}
 
 	// Splits data into parts, but as we are using TCP sockets to send data, splitting is pointless

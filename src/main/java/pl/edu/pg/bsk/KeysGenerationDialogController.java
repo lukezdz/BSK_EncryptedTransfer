@@ -17,6 +17,7 @@ import pl.edu.pg.bsk.encryption.EncryptionMode;
 import pl.edu.pg.bsk.encryption.EncryptionUtils;
 import pl.edu.pg.bsk.encryption.SymmetricEncryption;
 import pl.edu.pg.bsk.exceptions.EncryptionFailedException;
+import pl.edu.pg.bsk.utils.Utils;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
@@ -112,11 +113,15 @@ public class KeysGenerationDialogController implements Initializable {
 			Alert alert = new Alert(Alert.AlertType.ERROR);
 			alert.setHeaderText("Saving keys failed");
 			alert.setContentText("There was a problem with saving your key pair. Please try again.");
+			Stage alertStage = (Stage) alert.getDialogPane().getScene().getWindow();
+			alertStage.getIcons().add(Utils.getAppIcon());
 			alert.showAndWait();
 		} catch (EncryptionFailedException exception) {
 			Alert alert = new Alert(Alert.AlertType.ERROR);
 			alert.setHeaderText("Saving keys failed");
 			alert.setContentText("There was a problem with encrypting your private key. Please try again.");
+			Stage alertStage = (Stage) alert.getDialogPane().getScene().getWindow();
+			alertStage.getIcons().add(Utils.getAppIcon());
 			alert.showAndWait();
 		} catch (NoSuchAlgorithmException ignored) {}
 
