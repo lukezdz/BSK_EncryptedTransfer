@@ -29,9 +29,7 @@ public class ConnectionThread extends Thread {
 				}
 
 				handler.receiveData(read, socket.getInetAddress());
-			} catch (IOException | ParseException | EncryptionFailedException | NoSuchAlgorithmException | InvalidKeySpecException exception) {
-				exception.printStackTrace();
-			}
+			} catch (IOException | ParseException | EncryptionFailedException | NoSuchAlgorithmException | InvalidKeySpecException ignored) {}
 		}
 	}
 

@@ -2,6 +2,7 @@ package pl.edu.pg.bsk.controllers;
 
 import javafx.beans.binding.Bindings;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -104,17 +105,15 @@ public class MainUIController extends NotifiableController {
 		);
 		sendButton.setOnAction(this::handleSendButton);
 		sendFileButton.disableProperty().bind(
-				Bindings.isEmpty(contactsListView.getSelectionModel().getSelectedItems())
+				Bindings.notEqual(statusInfoLabel.textProperty(), READY).or(
+					Bindings.isEmpty(contactsListView.getSelectionModel().getSelectedItems())
+				)
 		);
 		sendFileButton.setOnAction(this::handleSendFileButton);
 
 		chatTextArea.setEditable(false);
 
-		addContactButton.disableProperty().bind(
-				Bindings.notEqual(statusInfoLabel.textProperty(), READY).or(
-						Bindings.equal(contactTextField.textProperty(), "")
-				)
-		);
+		addContactButton.disableProperty().bind(Bindings.equal(contactTextField.textProperty(), ""));
 		addContactButton.setOnAction(this::handleAddContact);
 	}
 
@@ -201,7 +200,8 @@ public class MainUIController extends NotifiableController {
 		try {
 			transferHandler.sendEncryptedMessage(messageTextArea.getText(), modeChoiceBox.getValue(), contactsListView.getSelectionModel().getSelectedItem());
 		} catch (TransferException e) {
-
+			Alert alert = getQuickDialog(Alert.AlertType.ERROR, "Error", "Transfer failed", e.getMessage());
+			alert.showAndWait();
 		}
 	}
 
@@ -210,11 +210,14 @@ public class MainUIController extends NotifiableController {
 		try {
 			FileChooser chooser = new FileChooser();
 			File file = chooser.showOpenDialog(null);
-			transferHandler.sendEncryptedFile(file, modeChoiceBox.getValue(), contactsListView.getSelectionModel().getSelectedItem());
+			Task<Void> sendingTask = transferHandler.sendEncryptedFile(file, modeChoiceBox.getValue(), contactsListView.getSelectionModel().getSelectedItem());
+			progressBar.progressProperty().bind(sendingTask.progressProperty());
 		} catch (TransferException e) {
-			e.printStackTrace();
+			Alert alert = getQuickDialog(Alert.AlertType.ERROR, "Error", "Transfer failed", e.getMessage());
+			alert.showAndWait();
 		} catch (IOException exception) {
-			exception.printStackTrace();
+			Alert alert = getQuickDialog(Alert.AlertType.ERROR, "Error", "Socket error", exception.getMessage());
+			alert.showAndWait();
 		}
 	}
 

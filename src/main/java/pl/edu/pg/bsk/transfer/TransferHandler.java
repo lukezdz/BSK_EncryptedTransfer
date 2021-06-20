@@ -200,7 +200,7 @@ public class TransferHandler extends Thread {
 
 				if (finalHandshakeTask.isCancelled()) {
 					cancel();
-					throw new TransferException("Transfer failed!");
+					throw new TransferException("RSA Handshake with destination failed.");
 				}
 
 				symmetricEncryption.setKey(info.getSessionKey());
