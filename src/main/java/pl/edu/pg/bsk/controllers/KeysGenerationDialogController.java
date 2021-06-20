@@ -1,4 +1,4 @@
-package pl.edu.pg.bsk;
+package pl.edu.pg.bsk.controllers;
 
 import javafx.beans.binding.Bindings;
 import javafx.event.ActionEvent;
