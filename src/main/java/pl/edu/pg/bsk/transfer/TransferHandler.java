@@ -66,6 +66,10 @@ public class TransferHandler extends Thread {
 	@SneakyThrows
 	@Override
 	public void run() {
+		Alert alert = new Alert(Alert.AlertType.INFORMATION);
+		alert.setContentText("Transfer handler is listening on port no. " + SERVER_PORT);
+		alert.show();
+
 		while (!isInterrupted()) {
 			Socket clientSocket = serverSocket.accept();
 			InetAddress address = clientSocket.getInetAddress();
@@ -74,17 +78,17 @@ public class TransferHandler extends Thread {
 			connections.put(address, thread);
 			thread.start();
 		}
-
-		for (Map.Entry<InetAddress, ConnectionThread> entry : connections.entrySet()) {
-			entry.getValue().close();
-		}
 	}
 
 	/**
 	 * Ends the server listening loop and closes all open connections.
 	 */
-	public void quitServer() {
+	public void quitServer() throws IOException {
 		interrupt();
+
+		for (Map.Entry<InetAddress, ConnectionThread> entry : connections.entrySet()) {
+			entry.getValue().close();
+		}
 	}
 
 	/**
@@ -121,6 +125,10 @@ public class TransferHandler extends Thread {
 			throws ParseException, EncryptionFailedException, IOException, NoSuchAlgorithmException, InvalidKeySpecException {
 		TransferData.ReadTransferData readTransferData = TransferData.readTransferData(data);
 		Metadata metadata = readTransferData.getMetadata();
+
+		Alert alert = new Alert(Alert.AlertType.INFORMATION);
+		alert.setContentText("Receive data has been called " + metadata.getType());
+		alert.show();
 
 		switch (metadata.getType()) {
 			case MESSAGE: {
@@ -234,7 +242,7 @@ public class TransferHandler extends Thread {
 			Socket socket = new Socket(address, SERVER_PORT);
 			ConnectionThread connectionThread = new ConnectionThread(this, socket);
 			connections.put(address, connectionThread);
-			connectionThread.run();
+			connectionThread.start();
 
 			byte[] handshakeData = TransferData.getPartOneHandshakeData(asymmetricEncryption.getPublicKey(), Metadata.TransferType.REQUEST);
 			connectionThread.write(handshakeData);

@@ -162,6 +162,7 @@ public class MainUIController extends NotifiableController {
 			selectedKeyPair = KeyPairWrapper.getInstance().getPair();
 			try {
 				transferHandler = new TransferHandler(this, selectedKeyPair);
+				transferHandler.start();
 				statusInfoLabel.setText(READY);
 			} catch (IOException e) {
 				Alert alert = getQuickDialog(Alert.AlertType.ERROR, "Error", "Failed to initialize server",
