@@ -34,6 +34,7 @@ public class ConnectionThread extends Thread {
 				int length = dis.readInt();
 
 				if (length > 0) {
+					System.out.println("Read int other than 0 from dis!");
 					byte[] read = new byte[length];
 					dis.readFully(read, 0, read.length);
 					handler.receiveData(read, socket.getInetAddress());
