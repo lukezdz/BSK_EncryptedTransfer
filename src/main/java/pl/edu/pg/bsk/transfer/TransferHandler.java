@@ -122,10 +122,11 @@ public class TransferHandler extends Thread {
 
 	public void receiveData(byte[] data, InetAddress address)
 			throws ParseException, EncryptionFailedException, IOException, NoSuchAlgorithmException, InvalidKeySpecException {
+		System.out.println("Receive data - reading transfer data");
 		TransferData.ReadTransferData readTransferData = TransferData.readTransferData(data);
+		System.out.println("Receive data - getting metadata");
 		Metadata metadata = readTransferData.getMetadata();
-
-		System.out.println("Receive data has been called " + metadata.getType());
+		System.out.println("Receive data - metadata: " + metadata.getType());
 
 		switch (metadata.getType()) {
 			case MESSAGE: {
