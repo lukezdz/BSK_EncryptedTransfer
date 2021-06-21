@@ -66,9 +66,7 @@ public class TransferHandler extends Thread {
 	@SneakyThrows
 	@Override
 	public void run() {
-		Alert alert = new Alert(Alert.AlertType.INFORMATION);
-		alert.setContentText("Transfer handler is listening on port no. " + SERVER_PORT);
-		alert.show();
+		System.out.println("Transfer handler is started and listening on thread " + SERVER_PORT);
 
 		while (!isInterrupted()) {
 			Socket clientSocket = serverSocket.accept();
@@ -126,9 +124,7 @@ public class TransferHandler extends Thread {
 		TransferData.ReadTransferData readTransferData = TransferData.readTransferData(data);
 		Metadata metadata = readTransferData.getMetadata();
 
-		Alert alert = new Alert(Alert.AlertType.INFORMATION);
-		alert.setContentText("Receive data has been called " + metadata.getType());
-		alert.show();
+		System.out.println("Receive data has been called " + metadata.getType());
 
 		switch (metadata.getType()) {
 			case MESSAGE: {
