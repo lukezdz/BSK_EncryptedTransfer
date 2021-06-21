@@ -39,7 +39,9 @@ public class ConnectionThread extends Thread {
 					dis.readFully(read, 0, read.length);
 					handler.receiveData(read, socket.getInetAddress());
 				}
-			} catch (IOException | ParseException | EncryptionFailedException | NoSuchAlgorithmException | InvalidKeySpecException ignored) {
+			} catch (IOException | ParseException | EncryptionFailedException | NoSuchAlgorithmException | InvalidKeySpecException exception) {
+				System.out.println("Closing socket:");
+				exception.printStackTrace();
 				socket.close();
 			}
 		}
