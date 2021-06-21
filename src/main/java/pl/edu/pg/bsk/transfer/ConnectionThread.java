@@ -34,6 +34,7 @@ public class ConnectionThread extends Thread {
 	}
 
 	public void write(byte[] data) throws IOException {
+		System.out.println("Sending data to " + socket.getInetAddress() + ":" + socket.getInetAddress().getHostAddress());
 		socket.getOutputStream().write(data);
 	}
 

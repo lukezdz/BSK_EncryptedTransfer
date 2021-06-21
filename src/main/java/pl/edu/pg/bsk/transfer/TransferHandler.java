@@ -71,6 +71,7 @@ public class TransferHandler extends Thread {
 		while (!isInterrupted()) {
 			Socket clientSocket = serverSocket.accept();
 			InetAddress address = clientSocket.getInetAddress();
+			System.out.println("Accepted client socket from " + address);
 			ConnectionThread thread = new ConnectionThread(this, clientSocket);
 
 			connections.put(address, thread);
@@ -239,6 +240,7 @@ public class TransferHandler extends Thread {
 			ConnectionThread connectionThread = new ConnectionThread(this, socket);
 			connections.put(address, connectionThread);
 			connectionThread.start();
+			System.out.println("Started connection thread for " + address);
 
 			byte[] handshakeData = TransferData.getPartOneHandshakeData(asymmetricEncryption.getPublicKey(), Metadata.TransferType.REQUEST);
 			connectionThread.write(handshakeData);
