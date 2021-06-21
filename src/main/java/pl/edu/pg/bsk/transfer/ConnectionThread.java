@@ -1,5 +1,6 @@
 package pl.edu.pg.bsk.transfer;
 
+import lombok.SneakyThrows;
 import org.json.simple.parser.ParseException;
 import pl.edu.pg.bsk.exceptions.EncryptionFailedException;
 
@@ -18,8 +19,10 @@ public class ConnectionThread extends Thread {
 		this.socket = socket;
 	}
 
+	@SneakyThrows
 	@Override
 	public void run() {
+		System.out.println("Started connection thread for " + socket.getInetAddress());
 		while (!socket.isClosed()) {
 			try {
 				byte[] read = socket.getInputStream().readAllBytes();
@@ -29,7 +32,9 @@ public class ConnectionThread extends Thread {
 				}
 
 				handler.receiveData(read, socket.getInetAddress());
-			} catch (IOException | ParseException | EncryptionFailedException | NoSuchAlgorithmException | InvalidKeySpecException ignored) {}
+			} catch (IOException | ParseException | EncryptionFailedException | NoSuchAlgorithmException | InvalidKeySpecException ignored) {
+				socket.close();
+			}
 		}
 	}
 
