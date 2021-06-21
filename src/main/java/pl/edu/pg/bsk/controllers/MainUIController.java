@@ -3,6 +3,7 @@ package pl.edu.pg.bsk.controllers;
 import javafx.beans.binding.Bindings;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
+import javafx.concurrent.WorkerStateEvent;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -198,7 +199,11 @@ public class MainUIController extends NotifiableController {
 	@FXML
 	public void handleSendButton(ActionEvent actionEvent) {
 		try {
-			transferHandler.sendEncryptedMessage(messageTextArea.getText(), modeChoiceBox.getValue(), contactsListView.getSelectionModel().getSelectedItem());
+			InetAddress address = contactsListView.getSelectionModel().getSelectedItem();
+			Task<Void> sendingTask = transferHandler.sendEncryptedMessage(messageTextArea.getText(), modeChoiceBox.getValue(), address);
+			sendingTask.setOnFailed(this::handleSendError);
+			String message = "To " + address + ": " + messageTextArea.getText();
+			updateTextArea(message);
 		} catch (TransferException e) {
 			Alert alert = getQuickDialog(Alert.AlertType.ERROR, "Error", "Transfer failed", e.getMessage());
 			alert.showAndWait();
@@ -210,8 +215,12 @@ public class MainUIController extends NotifiableController {
 		try {
 			FileChooser chooser = new FileChooser();
 			File file = chooser.showOpenDialog(null);
-			Task<Void> sendingTask = transferHandler.sendEncryptedFile(file, modeChoiceBox.getValue(), contactsListView.getSelectionModel().getSelectedItem());
+			InetAddress address = contactsListView.getSelectionModel().getSelectedItem();
+			Task<Void> sendingTask = transferHandler.sendEncryptedFile(file, modeChoiceBox.getValue(), address);
+			sendingTask.setOnFailed(this::handleSendError);
 			progressBar.progressProperty().bind(sendingTask.progressProperty());
+			String message = "You've sent " + file.getName() + " to " + address;
+			updateTextArea(message);
 		} catch (TransferException e) {
 			Alert alert = getQuickDialog(Alert.AlertType.ERROR, "Error", "Transfer failed", e.getMessage());
 			alert.showAndWait();
@@ -219,6 +228,13 @@ public class MainUIController extends NotifiableController {
 			Alert alert = getQuickDialog(Alert.AlertType.ERROR, "Error", "Socket error", exception.getMessage());
 			alert.showAndWait();
 		}
+	}
+
+	@FXML
+	public void handleSendError(WorkerStateEvent workerStateEvent) {
+		Throwable exception = workerStateEvent.getSource().getException();
+		Alert alert = getQuickDialog(Alert.AlertType.ERROR, "Error", "Transfer failed", exception.getMessage());
+		alert.showAndWait();
 	}
 
 	@FXML

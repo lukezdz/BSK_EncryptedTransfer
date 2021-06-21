@@ -1,6 +1,7 @@
 package pl.edu.pg.bsk.transfer;
 
 import javafx.concurrent.Task;
+import javafx.scene.control.Alert;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
@@ -19,6 +20,7 @@ import pl.edu.pg.bsk.exceptions.TransferException;
 import javax.crypto.spec.IvParameterSpec;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
@@ -115,7 +117,8 @@ public class TransferHandler extends Thread {
 		return sendEncryptedData(message.getBytes(StandardCharsets.UTF_8), encryptionMode, address, metadata);
 	}
 
-	public void receiveData(byte[] data, InetAddress address) throws ParseException, EncryptionFailedException, IOException, NoSuchAlgorithmException, InvalidKeySpecException {
+	public void receiveData(byte[] data, InetAddress address)
+			throws ParseException, EncryptionFailedException, IOException, NoSuchAlgorithmException, InvalidKeySpecException {
 		TransferData.ReadTransferData readTransferData = TransferData.readTransferData(data);
 		Metadata metadata = readTransferData.getMetadata();
 
@@ -188,20 +191,11 @@ public class TransferHandler extends Thread {
 			handshakeTask = performHandshake(address, encryptionMode);
 		}
 
-		Task<Void> finalHandshakeTask = handshakeTask;
 		Task<Void> sendingTask = new Task<Void>() {
 			@Override
 			protected Void call() throws Exception {
 				SessionInfo info = sessionInfos.get(address);
 				symmetricEncryption.setKey(info.getSessionKey());
-				while (finalHandshakeTask == null || (info == null && finalHandshakeTask.isRunning())) {
-					info = sessionInfos.get(address);
-				}
-
-				if (finalHandshakeTask.isCancelled()) {
-					cancel();
-					throw new TransferException("RSA Handshake with destination failed.");
-				}
 
 				symmetricEncryption.setKey(info.getSessionKey());
 				Optional<IvParameterSpec> iv = encryptionMode.needsInitializationVector() ?
@@ -221,7 +215,16 @@ public class TransferHandler extends Thread {
 			}
 		};
 
-		sendingTask.run();
+		handshakeTask.setOnSucceeded(workerStateEvent -> {
+			sendingTask.run();
+		});
+		handshakeTask.setOnFailed(workerStateEvent -> {
+			Alert alert = new Alert(Alert.AlertType.ERROR);
+			alert.setTitle("Error");
+			alert.setHeaderText("Handshake failed");
+			alert.setContentText(workerStateEvent.getSource().getException().getMessage());
+			alert.showAndWait();
+		});
 		return sendingTask;
 	}
 
@@ -229,10 +232,12 @@ public class TransferHandler extends Thread {
 		try {
 			sessionInfos.remove(address);
 			Socket socket = new Socket(address, SERVER_PORT);
-			OutputStream stream = socket.getOutputStream();
+			ConnectionThread connectionThread = new ConnectionThread(this, socket);
+			connections.put(address, connectionThread);
+			connectionThread.run();
 
 			byte[] handshakeData = TransferData.getPartOneHandshakeData(asymmetricEncryption.getPublicKey(), Metadata.TransferType.REQUEST);
-			stream.write(handshakeData);
+			connectionThread.write(handshakeData);
 
 			Task<Void> respondingTask = new Task<Void>() {
 				@Override
@@ -240,6 +245,7 @@ public class TransferHandler extends Thread {
 					LocalTime start = LocalTime.now();
 
 					while (Duration.between(start, LocalTime.now()).toSeconds() <= TIMEOUT) {
+
 						PublicKey key = publicKeys.get(address);
 						if (key != null) {
 							updateMessage("Received public key.");
@@ -251,7 +257,7 @@ public class TransferHandler extends Thread {
 							byte[] encrypted = asymmetricEncryption.encryptWithPublic(handshakeBody, key);
 							byte[] data = TransferData.getPartTwoHandshakeData(encrypted, Metadata.TransferType.REQUEST);
 							updateMessage("Responded with session info.");
-							stream.write(data);
+							connectionThread.write(data);
 
 							LocalTime responseWaitStart = LocalTime.now();
 							while (Duration.between(responseWaitStart, LocalTime.now()).toSeconds() <= TIMEOUT) {
