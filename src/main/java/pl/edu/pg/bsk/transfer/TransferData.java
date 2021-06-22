@@ -35,7 +35,7 @@ public class TransferData implements Serializable {
 		return new TransferData(metadata, publicKey.getEncoded());
 	}
 
-	public static byte[] getPartTwoHandshakeBody(SecretKey secretKey, IvParameterSpec iv, EncryptionMode mode) {
+	public static byte[] getPartTwoHandshakeBody(byte[] secretKey, byte[] iv, EncryptionMode mode) {
 		HandshakeComplexBody body = new HandshakeComplexBody(secretKey, iv, mode);
 
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -68,7 +68,7 @@ public class TransferData implements Serializable {
 		return new TransferData(metadata, encrypted);
 	}
 
-	public static SessionInfo parsePartTwoHandshakeData(byte[] decrypted) throws ParseException {
+	public static HandshakeComplexBody parsePartTwoHandshakeData(byte[] decrypted) {
 		ByteArrayInputStream bis = new ByteArrayInputStream(decrypted);
 		ObjectInput in = null;
 		HandshakeComplexBody body = null;
@@ -88,6 +88,6 @@ public class TransferData implements Serializable {
 			}
 		}
 
-		return new SessionInfo(body.getKey(), body.getMode(), body.getIv());
+		return body;
 	}
 }

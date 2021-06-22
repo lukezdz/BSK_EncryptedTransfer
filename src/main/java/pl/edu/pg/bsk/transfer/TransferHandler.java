@@ -17,6 +17,7 @@ import pl.edu.pg.bsk.encryption.SymmetricEncryption;
 import pl.edu.pg.bsk.exceptions.EncryptionFailedException;
 import pl.edu.pg.bsk.exceptions.TransferException;
 
+import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import java.io.File;
 import java.io.IOException;
@@ -165,16 +166,22 @@ public class TransferHandler extends Thread {
 				}
 				else if (metadata.getHandshakePart() == 2) {
 					byte[] read = data.getPayload();
-					byte[] decrypted = asymmetricEncryption.decryptWithPublic(read, publicKeys.get(address));
-					SessionInfo sessionInfo = TransferData.parsePartTwoHandshakeData(decrypted);
+					HandshakeComplexBody handshakeComplexBody = TransferData.parsePartTwoHandshakeData(read);
+					byte[] keyBytes = asymmetricEncryption.decryptWithPrivate(handshakeComplexBody.getEncodedKey());
+					byte[] ivBytes = asymmetricEncryption.decryptWithPrivate(handshakeComplexBody.getEncodedIv());
+					SecretKey key = HandshakeComplexBody.deserializeKey(keyBytes);
+					IvParameterSpec iv = HandshakeComplexBody.deserializeIv(ivBytes);
+					SessionInfo sessionInfo = new SessionInfo(key, handshakeComplexBody.getMode(), iv);
 					sessionInfos.put(address, sessionInfo);
 					if (metadata.getTransferType() == Metadata.TransferType.REQUEST) {
-						byte[] responseBody = TransferData.getPartTwoHandshakeBody(sessionInfo.getSessionKey(),
-								sessionInfo.getInitializationVector(), sessionInfo.getEncryptionMode());
-						byte[] encrypted = asymmetricEncryption.encryptWithPublic(
-								responseBody, publicKeys.get(address));
+						byte[] keyBytesToEncode = HandshakeComplexBody.serializeKey(sessionInfo.getSessionKey());
+						byte[] ivBytesToEncode = HandshakeComplexBody.serializeIv(sessionInfo.getInitializationVector());
+						byte[] encodedKey = asymmetricEncryption.encryptWithPublic(keyBytesToEncode, publicKeys.get(address));
+						byte[] encodedIv = asymmetricEncryption.encryptWithPublic(ivBytesToEncode, publicKeys.get(address));
+
+						byte[] responseBody = TransferData.getPartTwoHandshakeBody(encodedKey, encodedIv, sessionInfo.getEncryptionMode());
 						TransferData response = TransferData.getPartTwoHandshakeData(
-								encrypted, Metadata.TransferType.ANSWER);
+								responseBody, Metadata.TransferType.ANSWER);
 						connections.get(address).write(response);
 					}
 				}
@@ -245,24 +252,31 @@ public class TransferHandler extends Thread {
 			Task<Void> respondingTask = new Task<Void>() {
 				@Override
 				protected Void call() throws Exception {
+					System.out.println("Started Handshake responding task");
 					LocalTime start = LocalTime.now();
 
 					while (Duration.between(start, LocalTime.now()).toSeconds() <= TIMEOUT) {
 
 						PublicKey key = publicKeys.get(address);
 						if (key != null) {
+							System.out.println("Handshake responding task - key was not null, proceeding");
 							updateMessage("Received public key.");
-							byte[] handshakeBody = TransferData.getPartTwoHandshakeBody(
-									EncryptionUtils.getRandomSecureKey(KeySize.K_128),
-									EncryptionUtils.generateInitializationVector(),
-									encryptionMode
-							);
-							byte[] encrypted = asymmetricEncryption.encryptWithPublic(handshakeBody, key);
-							TransferData data = TransferData.getPartTwoHandshakeData(encrypted, Metadata.TransferType.REQUEST);
+
+							byte[] keyBytesToEncode = HandshakeComplexBody.serializeKey(EncryptionUtils.getRandomSecureKey(KeySize.K_128));
+							byte[] ivBytesToEncode = HandshakeComplexBody.serializeIv(EncryptionUtils.generateInitializationVector());
+							byte[] encodedKey = asymmetricEncryption.encryptWithPublic(keyBytesToEncode, key);
+							byte[] encodedIv = asymmetricEncryption.encryptWithPublic(ivBytesToEncode, key);
+
+							byte[] handshakeBody = TransferData.getPartTwoHandshakeBody(encodedKey, encodedIv, encryptionMode);
+
+							System.out.println("Handshake responding task - getting data");
+							TransferData data = TransferData.getPartTwoHandshakeData(handshakeBody, Metadata.TransferType.REQUEST);
 							updateMessage("Responded with session info.");
+							System.out.println("Handshake responding task - writing data");
 							connectionThread.write(data);
 
 							LocalTime responseWaitStart = LocalTime.now();
+							System.out.println("Handshake responding task - waiting for SessionInfo response");
 							while (Duration.between(responseWaitStart, LocalTime.now()).toSeconds() <= TIMEOUT) {
 								SessionInfo info = sessionInfos.get(address);
 								if (info != null) {

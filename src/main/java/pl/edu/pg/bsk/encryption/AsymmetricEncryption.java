@@ -72,11 +72,11 @@ public class AsymmetricEncryption {
 			cipher = Cipher.getInstance(RSA);
 			cipher.init(cipherMode, key);
 		} catch (NoSuchPaddingException e) {
-			throw new EncryptionFailedException(operation + " failed. No such padding available");
+			throw new EncryptionFailedException(operation + " failed. No such padding available:\n" + e.getMessage());
 		} catch (NoSuchAlgorithmException e) {
-			throw new EncryptionFailedException(operation + " failed. No such algorithm available");
+			throw new EncryptionFailedException(operation + " failed. No such algorithm available:\n" + e.getMessage());
 		} catch (InvalidKeyException e) {
-			throw new EncryptionFailedException(operation + " failed. Provided key is invalid");
+			throw new EncryptionFailedException(operation + " failed. Provided key is invalid:\n" + e.getMessage());
 		}
 
 		return cipher;
@@ -86,9 +86,9 @@ public class AsymmetricEncryption {
 		try {
 			return cipher.doFinal(data);
 		} catch (BadPaddingException e) {
-			throw new EncryptionFailedException(operation + " failed. Bad padding");
+			throw new EncryptionFailedException(operation + " failed. Bad padding:\n" + e.getMessage());
 		} catch (IllegalBlockSizeException e) {
-			throw new EncryptionFailedException(operation + " failed. Illegal block size");
+			throw new EncryptionFailedException(operation + " failed. Illegal block size:\n" + e.getMessage());
 		}
 	}
 }
