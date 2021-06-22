@@ -149,7 +149,7 @@ public class TransferHandler extends Thread {
 				Optional<IvParameterSpec> iv = info.getInitializationVector() == null ?
 						Optional.empty() : Optional.of(info.getInitializationVector());
 
-				File file = new File(downloadDir.getPath() + metadata.getFilename());
+				File file = new File(downloadDir.getPath() + "/" + metadata.getFilename());
 				symmetricEncryption.setKey(info.getSessionKey());
 				byte[] decrypted = symmetricEncryption.decrypt(data.getPayload(), info.getEncryptionMode(), iv);
 				FileUtils.writeByteArrayToFile(file, decrypted);
