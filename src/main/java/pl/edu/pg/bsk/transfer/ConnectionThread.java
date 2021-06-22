@@ -17,16 +17,12 @@ import java.security.spec.InvalidKeySpecException;
 public class ConnectionThread extends Thread {
 	private final TransferHandler handler;
 	private final Socket socket;
-	private final DataOutputStream dos;
-	private final DataInputStream dis;
 	private final ObjectOutputStream oos;
 	private final ObjectInputStream ois;
 
 	public ConnectionThread(TransferHandler handler, Socket socket) throws IOException {
 		this.handler = handler;
 		this.socket = socket;
-		dos = new DataOutputStream(socket.getOutputStream());
-		dis = new DataInputStream(socket.getInputStream());
 		oos = new ObjectOutputStream(socket.getOutputStream());
 		ois = new ObjectInputStream(socket.getInputStream());
 	}

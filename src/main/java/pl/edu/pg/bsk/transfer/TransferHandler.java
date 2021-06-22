@@ -166,7 +166,7 @@ public class TransferHandler extends Thread {
 				}
 				else if (metadata.getHandshakePart() == 2) {
 					byte[] read = data.getPayload();
-					HandshakeComplexBody handshakeComplexBody = TransferData.parsePartTwoHandshakeData(read);
+					HandshakeComplexBody handshakeComplexBody = data.getHandshakeComplexBody();
 					byte[] keyBytes = asymmetricEncryption.decryptWithPrivate(handshakeComplexBody.getEncodedKey());
 					byte[] ivBytes = asymmetricEncryption.decryptWithPrivate(handshakeComplexBody.getEncodedIv());
 					SecretKey key = HandshakeComplexBody.deserializeKey(keyBytes);
@@ -179,9 +179,10 @@ public class TransferHandler extends Thread {
 						byte[] encodedKey = asymmetricEncryption.encryptWithPublic(keyBytesToEncode, publicKeys.get(address));
 						byte[] encodedIv = asymmetricEncryption.encryptWithPublic(ivBytesToEncode, publicKeys.get(address));
 
-						byte[] responseBody = TransferData.getPartTwoHandshakeBody(encodedKey, encodedIv, sessionInfo.getEncryptionMode());
+						HandshakeComplexBody responseBody = new HandshakeComplexBody(encodedKey, encodedIv, sessionInfo.getEncryptionMode());
 						TransferData response = TransferData.getPartTwoHandshakeData(
-								responseBody, Metadata.TransferType.ANSWER);
+								null, Metadata.TransferType.ANSWER);
+						response.setHandshakeComplexBody(responseBody);
 						connections.get(address).write(response);
 					}
 				}
@@ -267,10 +268,11 @@ public class TransferHandler extends Thread {
 							byte[] encodedKey = asymmetricEncryption.encryptWithPublic(keyBytesToEncode, key);
 							byte[] encodedIv = asymmetricEncryption.encryptWithPublic(ivBytesToEncode, key);
 
-							byte[] handshakeBody = TransferData.getPartTwoHandshakeBody(encodedKey, encodedIv, encryptionMode);
+							HandshakeComplexBody handshakeBody = new HandshakeComplexBody(encodedKey, encodedIv, encryptionMode);
 
 							System.out.println("Handshake responding task - getting data");
-							TransferData data = TransferData.getPartTwoHandshakeData(handshakeBody, Metadata.TransferType.REQUEST);
+							TransferData data = TransferData.getPartTwoHandshakeData(null, Metadata.TransferType.REQUEST);
+							data.setHandshakeComplexBody(handshakeBody);
 							updateMessage("Responded with session info.");
 							System.out.println("Handshake responding task - writing data");
 							connectionThread.write(data);

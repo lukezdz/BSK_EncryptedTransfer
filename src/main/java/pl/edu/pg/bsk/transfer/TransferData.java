@@ -20,7 +20,8 @@ import java.security.PublicKey;
 @Setter
 public class TransferData implements Serializable {
 	private final Metadata metadata;
-	private final byte[] payload;
+	private byte[] payload;
+	private HandshakeComplexBody handshakeComplexBody;
 
 	public TransferData(Metadata metadata, byte[] data) {
 		this.metadata = metadata;
