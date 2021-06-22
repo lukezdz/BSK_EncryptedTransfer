@@ -267,8 +267,10 @@ public class TransferHandler extends Thread {
 							System.out.println("Handshake responding task - key was not null, proceeding");
 							updateMessage("Received public key.");
 
-							byte[] keyBytesToEncode = HandshakeComplexBody.serializeKey(EncryptionUtils.getRandomSecureKey(KeySize.K_128));
-							byte[] ivBytesToEncode = HandshakeComplexBody.serializeIv(EncryptionUtils.generateInitializationVector());
+							byte[] keyBytesToEncode = HandshakeComplexBody.serializeKey(
+									EncryptionUtils.getRandomSecureKey(KeySize.K_128));
+							byte[] ivBytesToEncode = HandshakeComplexBody.serializeIv(
+									EncryptionUtils.generateInitializationVector());
 							byte[] encodedKey = asymmetricEncryption.encryptWithPublic(keyBytesToEncode, key);
 							byte[] encodedIv = asymmetricEncryption.encryptWithPublic(ivBytesToEncode, key);
 							System.out.println("Encoded key: " + Arrays.toString(encodedKey));

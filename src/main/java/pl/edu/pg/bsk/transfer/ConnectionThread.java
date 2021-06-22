@@ -11,6 +11,7 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
+import java.util.Arrays;
 
 public class ConnectionThread extends Thread {
 	private final TransferHandler handler;
@@ -34,7 +35,10 @@ public class ConnectionThread extends Thread {
 				TransferData data = (TransferData) ois.readObject();
 
 				if (data != null) {
-					System.out.println("Read int other than 0 from dis!");
+					System.out.println("Received data!");
+					System.out.println("Payload: " + Arrays.toString(data.getPayload()));
+					System.out.println("Complex body:\n\tKey: " + Arrays.toString(data.getHandshakeComplexBody().getEncodedKey()));
+					System.out.println("\tIV: " + Arrays.toString(data.getHandshakeComplexBody().getEncodedIv()));
 					handler.receiveData(data, socket.getInetAddress());
 				}
 			} catch (IOException | ParseException | EncryptionFailedException | NoSuchAlgorithmException | InvalidKeySpecException exception) {
@@ -47,6 +51,9 @@ public class ConnectionThread extends Thread {
 
 	public void write(TransferData data) throws IOException {
 		System.out.println("Sending data to " + socket.getInetAddress() + ":" + socket.getInetAddress().getHostAddress());
+		System.out.println("Payload: " + Arrays.toString(data.getPayload()));
+		System.out.println("Complex body:\n\tKey: " + Arrays.toString(data.getHandshakeComplexBody().getEncodedKey()));
+		System.out.println("\tIV: " + Arrays.toString(data.getHandshakeComplexBody().getEncodedIv()));
 		oos.writeObject(data);
 	}
 
