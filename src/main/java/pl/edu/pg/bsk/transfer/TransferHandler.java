@@ -149,7 +149,7 @@ public class TransferHandler extends Thread {
 				Optional<IvParameterSpec> iv = info.getInitializationVector() == null ?
 						Optional.empty() : Optional.of(info.getInitializationVector());
 
-				File file = new File(downloadDir.getPath());
+				File file = new File(downloadDir.getPath() + metadata.getFilename());
 				symmetricEncryption.setKey(info.getSessionKey());
 				byte[] decrypted = symmetricEncryption.decrypt(data.getPayload(), info.getEncryptionMode(), iv);
 				FileUtils.writeByteArrayToFile(file, decrypted);
@@ -173,7 +173,6 @@ public class TransferHandler extends Thread {
 					}
 				}
 				else if (metadata.getHandshakePart() == 2) {
-					byte[] read = data.getPayload();
 					HandshakeComplexBody handshakeComplexBody = data.getHandshakeComplexBody();
 					byte[] keyBytes = asymmetricEncryption.decryptWithPrivate(handshakeComplexBody.getEncodedKey());
 					byte[] ivBytes = asymmetricEncryption.decryptWithPrivate(handshakeComplexBody.getEncodedIv());
@@ -186,8 +185,6 @@ public class TransferHandler extends Thread {
 						byte[] ivBytesToEncode = HandshakeComplexBody.serializeIv(sessionInfo.getInitializationVector());
 						byte[] encodedKey = asymmetricEncryption.encryptWithPublic(keyBytesToEncode, publicKeys.get(address));
 						byte[] encodedIv = asymmetricEncryption.encryptWithPublic(ivBytesToEncode, publicKeys.get(address));
-//						byte[] encodedKey = asymmetricEncryption.encryptWithPublic(keyBytesToEncode, asymmetricEncryption.getPublicKey());
-//						byte[] encodedIv = asymmetricEncryption.encryptWithPublic(ivBytesToEncode, asymmetricEncryption.getPublicKey());
 
 						HandshakeComplexBody responseBody = new HandshakeComplexBody(encodedKey, encodedIv, sessionInfo.getEncryptionMode());
 						TransferData response = TransferData.getPartTwoHandshakeData(
