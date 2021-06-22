@@ -20,8 +20,6 @@ import pl.edu.pg.bsk.exceptions.TransferException;
 import javax.crypto.spec.IvParameterSpec;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -120,12 +118,9 @@ public class TransferHandler extends Thread {
 		return sendEncryptedData(message.getBytes(StandardCharsets.UTF_8), encryptionMode, address, metadata);
 	}
 
-	public void receiveData(byte[] data, InetAddress address)
+	public void receiveData(TransferData data, InetAddress address)
 			throws ParseException, EncryptionFailedException, IOException, NoSuchAlgorithmException, InvalidKeySpecException {
-		System.out.println("Receive data - reading transfer data");
-		TransferData.ReadTransferData readTransferData = TransferData.readTransferData(data);
-		System.out.println("Receive data - getting metadata");
-		Metadata metadata = readTransferData.getMetadata();
+		Metadata metadata = data.getMetadata();
 		System.out.println("Receive data - metadata: " + metadata.getType());
 
 		switch (metadata.getType()) {
@@ -135,7 +130,7 @@ public class TransferHandler extends Thread {
 						Optional.empty() : Optional.of(info.getInitializationVector());
 
 				String message = new String(symmetricEncryption.decrypt(
-						readTransferData.getData(), info.getEncryptionMode(), iv));
+						data.getPayload(), info.getEncryptionMode(), iv));
 
 				ControllerNotification notification = new ControllerNotification(metadata, address, message);
 				myController.notifyController(notification);
@@ -148,7 +143,7 @@ public class TransferHandler extends Thread {
 						Optional.empty() : Optional.of(info.getInitializationVector());
 
 				File file = new File(downloadDir.getPath());
-				byte[] decrypted = symmetricEncryption.decrypt(readTransferData.getData(), info.getEncryptionMode(), iv);
+				byte[] decrypted = symmetricEncryption.decrypt(data.getPayload(), info.getEncryptionMode(), iv);
 				FileUtils.writeByteArrayToFile(file, decrypted);
 
 				ControllerNotification notification = new ControllerNotification(metadata, address, file);
@@ -157,19 +152,19 @@ public class TransferHandler extends Thread {
 				break;
 			}
 			case HANDSHAKE: {
-				if (readTransferData.getMetadata().getHandshakePart() == 1) {
-					byte[] read = readTransferData.getData();
+				if (data.getMetadata().getHandshakePart() == 1) {
+					byte[] read = data.getPayload();
 					PublicKey publicKey = KeyFactory.getInstance("RSA").generatePublic(
 							new X509EncodedKeySpec(read));
 					publicKeys.put(address, publicKey);
 					if (metadata.getTransferType() == Metadata.TransferType.REQUEST) {
-						byte[] response = TransferData.getPartOneHandshakeData(
+						TransferData response = TransferData.getPartOneHandshakeData(
 								asymmetricEncryption.getPublicKey(), Metadata.TransferType.ANSWER);
 						connections.get(address).write(response);
 					}
 				}
-				else if (readTransferData.getMetadata().getHandshakePart() == 2) {
-					byte[] read = readTransferData.getData();
+				else if (metadata.getHandshakePart() == 2) {
+					byte[] read = data.getPayload();
 					byte[] decrypted = asymmetricEncryption.decryptWithPublic(read, publicKeys.get(address));
 					SessionInfo sessionInfo = TransferData.parsePartTwoHandshakeData(decrypted);
 					sessionInfos.put(address, sessionInfo);
@@ -178,7 +173,7 @@ public class TransferHandler extends Thread {
 								sessionInfo.getInitializationVector(), sessionInfo.getEncryptionMode());
 						byte[] encrypted = asymmetricEncryption.encryptWithPublic(
 								responseBody, publicKeys.get(address));
-						byte[] response = TransferData.getPartTwoHandshakeData(
+						TransferData response = TransferData.getPartTwoHandshakeData(
 								encrypted, Metadata.TransferType.ANSWER);
 						connections.get(address).write(response);
 					}
@@ -209,9 +204,11 @@ public class TransferHandler extends Thread {
 				byte[] encrypted = symmetricEncryption.encrypt(data, encryptionMode, iv);
 
 				try {
-					Socket socket = getSocket(address);
-					OutputStream stream = socket.getOutputStream();
-					stream.write(TransferData.getTransferData(encrypted, metadata));
+					ConnectionThread thread = connections.get(address);
+					if (thread == null) {
+						throw new TransferException("Socket is closed");
+					}
+					thread.write(new TransferData(metadata, encrypted));
 				} catch (IOException e) {
 					throw new TransferException("Could not transfer data to destination");
 				}
@@ -242,7 +239,7 @@ public class TransferHandler extends Thread {
 			connections.put(address, connectionThread);
 			connectionThread.start();
 
-			byte[] handshakeData = TransferData.getPartOneHandshakeData(asymmetricEncryption.getPublicKey(), Metadata.TransferType.REQUEST);
+			TransferData handshakeData = TransferData.getPartOneHandshakeData(asymmetricEncryption.getPublicKey(), Metadata.TransferType.REQUEST);
 			connectionThread.write(handshakeData);
 
 			Task<Void> respondingTask = new Task<Void>() {
@@ -261,7 +258,7 @@ public class TransferHandler extends Thread {
 									encryptionMode
 							);
 							byte[] encrypted = asymmetricEncryption.encryptWithPublic(handshakeBody, key);
-							byte[] data = TransferData.getPartTwoHandshakeData(encrypted, Metadata.TransferType.REQUEST);
+							TransferData data = TransferData.getPartTwoHandshakeData(encrypted, Metadata.TransferType.REQUEST);
 							updateMessage("Responded with session info.");
 							connectionThread.write(data);
 

@@ -1,122 +1,92 @@
 package pl.edu.pg.bsk.transfer;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import com.google.gson.reflect.TypeToken;
 import lombok.Getter;
 import lombok.Setter;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import pl.edu.pg.bsk.encryption.EncryptionMode;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
-import java.lang.reflect.Type;
-import java.nio.charset.StandardCharsets;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.security.PublicKey;
 
+@Getter
+@Setter
 public class TransferData {
-	public static final String METADATA = "Metadata";
-	public static final String BODY = "Body";
-	public static final String BODY_SECRET_KEY = "SecretKey";
-	public static final String BODY_IV = "InitializationVector";
-	public static final String BODY_ENCRYPTION_MODE = "EncryptionMode";
+	private final Metadata metadata;
+	private final byte[] payload;
 
-
-
-	public static class ReadTransferData {
-		@Getter
-		final Metadata metadata;
-
-		@Getter
-		@Setter
-		byte[] data;
-
-		private ReadTransferData(Metadata metadata) {
-			this.metadata = metadata;
-		}
+	public TransferData(Metadata metadata, byte[] data) {
+		this.metadata = metadata;
+		this.payload = data;
 	}
 
-	public static byte[] getPartOneHandshakeData(PublicKey publicKey, Metadata.TransferType transferType) {
-		JSONObject formatted = new JSONObject();
+	public static TransferData getPartOneHandshakeData(PublicKey publicKey, Metadata.TransferType transferType) {
 		Metadata metadata = new Metadata(Metadata.MetadataType.HANDSHAKE);
 		metadata.setHandshakePart(1);
 		metadata.setTransferType(transferType);
-		Gson gson = new Gson();
-		String metadataJson = gson.toJson(metadata);
-		String dataJson = gson.toJson(publicKey.getEncoded());
-		formatted.put(METADATA, metadataJson);
-		formatted.put(BODY, dataJson);
 
-		return formatted.toJSONString().getBytes(StandardCharsets.UTF_8);
+		return new TransferData(metadata, publicKey.getEncoded());
 	}
 
 	public static byte[] getPartTwoHandshakeBody(SecretKey secretKey, IvParameterSpec iv, EncryptionMode mode) {
-		JSONObject body = new JSONObject();
-		Gson gson = new Gson();
-		body.put(BODY_SECRET_KEY, gson.toJson(secretKey));
-		body.put(BODY_IV, gson.toJson(iv));
-		body.put(BODY_ENCRYPTION_MODE, gson.toJson(mode));
+		HandshakeComplexBody body = new HandshakeComplexBody(secretKey, iv, mode);
 
-		return body.toJSONString().getBytes(StandardCharsets.UTF_8);
+		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		ObjectOutputStream out = null;
+		byte[] result = null;
+		try {
+			out = new ObjectOutputStream(bos);
+			out.writeObject(body);
+			out.flush();
+			result = bos.toByteArray();
+		} catch (IOException ex) {
+
+		}
+		finally {
+			try {
+				bos.close();
+			} catch (IOException ex) {
+				// ignore close exception
+			}
+		}
+
+		return result;
 	}
 
-	public static byte[] getPartTwoHandshakeData(byte[] encrypted, Metadata.TransferType transferType) {
-		JSONObject formatted = new JSONObject();
+	public static TransferData getPartTwoHandshakeData(byte[] encrypted, Metadata.TransferType transferType) {
 		Metadata metadata = new Metadata(Metadata.MetadataType.HANDSHAKE);
 		metadata.setHandshakePart(2);
 		metadata.setTransferType(transferType);
-		Gson gson = new Gson();
-		formatted.put(METADATA, gson.toJson(metadata));
-		formatted.put(BODY, gson.toJson(encrypted));
 
-		return formatted.toJSONString().getBytes(StandardCharsets.UTF_8);
+		return new TransferData(metadata, encrypted);
 	}
 
 	public static SessionInfo parsePartTwoHandshakeData(byte[] decrypted) throws ParseException {
-		JSONParser parser = new JSONParser();
-		String str = new String(decrypted);
-		JSONObject parsed = (JSONObject) parser.parse(str);
+		ByteArrayInputStream bis = new ByteArrayInputStream(decrypted);
+		ObjectInput in = null;
+		HandshakeComplexBody body = null;
+		try {
+			in = new ObjectInputStream(bis);
+			 body = (HandshakeComplexBody) in.readObject();
+		} catch (IOException | ClassNotFoundException ex) {
 
-		Gson gson = new Gson();
-		Type secretKeyType = new TypeToken<SecretKey>() {}.getType();
-		Type ivType = new TypeToken<IvParameterSpec>() {}.getType();
-		Type modeType = new TypeToken<EncryptionMode>() {}.getType();
+		}
+		finally {
+			try {
+				if (in != null) {
+					in.close();
+				}
+			} catch (IOException ex) {
+				// ignore close exception
+			}
+		}
 
-		SecretKey secretKey = gson.fromJson((String) parsed.get(BODY_SECRET_KEY), secretKeyType);
-		IvParameterSpec iv = gson.fromJson((String) parsed.get(BODY_IV), ivType);
-		EncryptionMode mode = gson.fromJson((String) parsed.get(BODY_ENCRYPTION_MODE), modeType);
-
-		return new SessionInfo(secretKey, mode, iv);
-	}
-
-	public static byte[] getTransferData(byte[] data, Metadata metadata) {
-		JSONObject formatted = new JSONObject();
-		Gson gson = new Gson();
-		String metadataJson = gson.toJson(metadata);
-		String dataJson = gson.toJson(data);
-		System.out.println("Metadata json: " + metadataJson);
-		System.out.println("Data json: " + dataJson);
-		formatted.put(METADATA, metadataJson);
-		formatted.put(BODY, dataJson);
-
-		return formatted.toJSONString().getBytes(StandardCharsets.UTF_8);
-	}
-
-	public static ReadTransferData readTransferData(byte[] transferData) throws ParseException {
-		JSONParser parser = new JSONParser();
-		String str = new String(transferData);
-		JSONObject parsed = (JSONObject) parser.parse(str);
-
-		Gson gson = new Gson();
-		Type metadataType = new TypeToken<Metadata>() {}.getType();
-		Type dataType = new TypeToken<byte[]>() {}.getType();
-		Metadata metadata = gson.fromJson((String) parsed.get(METADATA), metadataType);
-		byte[] data = gson.fromJson((String) parsed.get(BODY), dataType);
-
-		ReadTransferData read = new ReadTransferData(metadata);
-		read.setData(data);
-		return read;
+		return new SessionInfo(body.getKey(), body.getMode(), body.getIv());
 	}
 }
