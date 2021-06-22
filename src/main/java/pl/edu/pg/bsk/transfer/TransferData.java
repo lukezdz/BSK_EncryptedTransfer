@@ -13,11 +13,12 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.security.PublicKey;
 
 @Getter
 @Setter
-public class TransferData {
+public class TransferData implements Serializable {
 	private final Metadata metadata;
 	private final byte[] payload;
 

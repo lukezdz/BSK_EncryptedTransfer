@@ -3,11 +3,12 @@ package pl.edu.pg.bsk.transfer;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 @Getter
 @Setter
-public class Metadata {
+public class Metadata implements Serializable {
 	private MetadataType type;
 	private TransferType transferType;
 	private long handshakePart;
