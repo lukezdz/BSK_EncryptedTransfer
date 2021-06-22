@@ -132,7 +132,7 @@ public class TransferHandler extends Thread {
 		switch (metadata.getType()) {
 			case MESSAGE: {
 				SessionInfo info = sessionInfos.get(address);
-				Optional<IvParameterSpec> iv = info.getInitializationVector() == null ?
+				Optional<IvParameterSpec> iv = info.getEncryptionMode() == EncryptionMode.AES_ECB ?
 						Optional.empty() : Optional.of(info.getInitializationVector());
 
 				String message = new String(symmetricEncryption.decrypt(
@@ -182,10 +182,10 @@ public class TransferHandler extends Thread {
 					if (metadata.getTransferType() == Metadata.TransferType.REQUEST) {
 						byte[] keyBytesToEncode = HandshakeComplexBody.serializeKey(sessionInfo.getSessionKey());
 						byte[] ivBytesToEncode = HandshakeComplexBody.serializeIv(sessionInfo.getInitializationVector());
-//						byte[] encodedKey = asymmetricEncryption.encryptWithPublic(keyBytesToEncode, publicKeys.get(address));
-//						byte[] encodedIv = asymmetricEncryption.encryptWithPublic(ivBytesToEncode, publicKeys.get(address));
-						byte[] encodedKey = asymmetricEncryption.encryptWithPublic(keyBytesToEncode, asymmetricEncryption.getPublicKey());
-						byte[] encodedIv = asymmetricEncryption.encryptWithPublic(ivBytesToEncode, asymmetricEncryption.getPublicKey());
+						byte[] encodedKey = asymmetricEncryption.encryptWithPublic(keyBytesToEncode, publicKeys.get(address));
+						byte[] encodedIv = asymmetricEncryption.encryptWithPublic(ivBytesToEncode, publicKeys.get(address));
+//						byte[] encodedKey = asymmetricEncryption.encryptWithPublic(keyBytesToEncode, asymmetricEncryption.getPublicKey());
+//						byte[] encodedIv = asymmetricEncryption.encryptWithPublic(ivBytesToEncode, asymmetricEncryption.getPublicKey());
 
 						HandshakeComplexBody responseBody = new HandshakeComplexBody(encodedKey, encodedIv, sessionInfo.getEncryptionMode());
 						TransferData response = TransferData.getPartTwoHandshakeData(

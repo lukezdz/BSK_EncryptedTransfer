@@ -45,12 +45,12 @@ public class AsymmetricEncryption {
 	}
 
 	public byte[] encryptWithPublic(byte[] data, PublicKey key) throws EncryptionFailedException {
-		Cipher cipher = getCipherInstance(Cipher.ENCRYPT_MODE, publicKey);
+		Cipher cipher = getCipherInstance(Cipher.ENCRYPT_MODE, key);
 		return performOperation(cipher, data, ENCRYPTION);
 	}
 
 	public byte[] decryptWithPublic(byte[] data, PublicKey key) throws EncryptionFailedException {
-		Cipher cipher = getCipherInstance(Cipher.DECRYPT_MODE, publicKey);
+		Cipher cipher = getCipherInstance(Cipher.DECRYPT_MODE, key);
 		return performOperation(cipher, data, DECRYPTION);
 	}
 
