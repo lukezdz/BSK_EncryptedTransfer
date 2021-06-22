@@ -37,8 +37,10 @@ public class ConnectionThread extends Thread {
 				if (data != null) {
 					System.out.println("Received data!");
 					System.out.println("Payload: " + Arrays.toString(data.getPayload()));
-					System.out.println("Complex body:\n\tKey: " + Arrays.toString(data.getHandshakeComplexBody().getEncodedKey()));
-					System.out.println("\tIV: " + Arrays.toString(data.getHandshakeComplexBody().getEncodedIv()));
+					if (data.getHandshakeComplexBody() != null) {
+						System.out.println("Complex body:\n\tKey: " + Arrays.toString(data.getHandshakeComplexBody().getEncodedKey()));
+						System.out.println("\tIV: " + Arrays.toString(data.getHandshakeComplexBody().getEncodedIv()));
+					}
 					handler.receiveData(data, socket.getInetAddress());
 				}
 			} catch (IOException | ParseException | EncryptionFailedException | NoSuchAlgorithmException | InvalidKeySpecException exception) {
@@ -52,8 +54,10 @@ public class ConnectionThread extends Thread {
 	public void write(TransferData data) throws IOException {
 		System.out.println("Sending data to " + socket.getInetAddress() + ":" + socket.getInetAddress().getHostAddress());
 		System.out.println("Payload: " + Arrays.toString(data.getPayload()));
-		System.out.println("Complex body:\n\tKey: " + Arrays.toString(data.getHandshakeComplexBody().getEncodedKey()));
-		System.out.println("\tIV: " + Arrays.toString(data.getHandshakeComplexBody().getEncodedIv()));
+		if (data.getHandshakeComplexBody() != null) {
+			System.out.println("Complex body:\n\tKey: " + Arrays.toString(data.getHandshakeComplexBody().getEncodedKey()));
+			System.out.println("\tIV: " + Arrays.toString(data.getHandshakeComplexBody().getEncodedIv()));
+		}
 		oos.writeObject(data);
 	}
 
