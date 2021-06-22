@@ -159,6 +159,7 @@ public class TransferHandler extends Thread {
 					PublicKey publicKey = KeyFactory.getInstance("RSA").generatePublic(
 							new X509EncodedKeySpec(read));
 					publicKeys.put(address, publicKey);
+					System.out.println("Saved public key from " + address + ".\nPublic key: " + publicKey + "\nMy public key: " + asymmetricEncryption.getPublicKey());
 					if (metadata.getTransferType() == Metadata.TransferType.REQUEST) {
 						TransferData response = TransferData.getPartOneHandshakeData(
 								asymmetricEncryption.getPublicKey(), Metadata.TransferType.ANSWER);
@@ -248,8 +249,10 @@ public class TransferHandler extends Thread {
 			connections.put(address, connectionThread);
 			connectionThread.start();
 
-			TransferData handshakeData = TransferData.getPartOneHandshakeData(asymmetricEncryption.getPublicKey(), Metadata.TransferType.REQUEST);
-			connectionThread.write(handshakeData);
+			if (publicKeys.get(address) == null) {
+				TransferData handshakeData = TransferData.getPartOneHandshakeData(asymmetricEncryption.getPublicKey(), Metadata.TransferType.REQUEST);
+				connectionThread.write(handshakeData);
+			}
 
 			Task<Void> respondingTask = new Task<Void>() {
 				@Override
