@@ -17,7 +17,7 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 
 public class AsymmetricEncryption {
-	private static final String RSA = "RSA";
+	private static final String RSA = "RSA/ECB/PKCS1PADDING";
 	private static final String ENCRYPTION = "Encryption";
 	private static final String DECRYPTION = "Decryption";
 

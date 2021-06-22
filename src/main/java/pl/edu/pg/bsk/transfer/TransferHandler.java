@@ -34,6 +34,7 @@ import java.security.spec.X509EncodedKeySpec;
 import java.time.Duration;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -267,6 +268,10 @@ public class TransferHandler extends Thread {
 							byte[] ivBytesToEncode = HandshakeComplexBody.serializeIv(EncryptionUtils.generateInitializationVector());
 							byte[] encodedKey = asymmetricEncryption.encryptWithPublic(keyBytesToEncode, key);
 							byte[] encodedIv = asymmetricEncryption.encryptWithPublic(ivBytesToEncode, key);
+							System.out.println("Encoded key: " + Arrays.toString(encodedKey));
+							System.out.println("Encoded key size: " + encodedKey.length);
+							System.out.println("Encoded iv: " + Arrays.toString(encodedIv));
+							System.out.println("Encoded iv size: " + encodedIv.length);
 
 							HandshakeComplexBody handshakeBody = new HandshakeComplexBody(encodedKey, encodedIv, encryptionMode);
 

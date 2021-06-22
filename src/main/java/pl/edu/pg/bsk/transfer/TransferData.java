@@ -2,11 +2,8 @@ package pl.edu.pg.bsk.transfer;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.json.simple.parser.ParseException;
 import pl.edu.pg.bsk.encryption.EncryptionMode;
 
-import javax.crypto.SecretKey;
-import javax.crypto.spec.IvParameterSpec;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
