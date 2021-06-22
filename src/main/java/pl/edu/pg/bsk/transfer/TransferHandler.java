@@ -135,6 +135,7 @@ public class TransferHandler extends Thread {
 				Optional<IvParameterSpec> iv = info.getEncryptionMode() == EncryptionMode.AES_ECB ?
 						Optional.empty() : Optional.of(info.getInitializationVector());
 
+				symmetricEncryption.setKey(info.getSessionKey());
 				String message = new String(symmetricEncryption.decrypt(
 						data.getPayload(), info.getEncryptionMode(), iv));
 
@@ -149,6 +150,7 @@ public class TransferHandler extends Thread {
 						Optional.empty() : Optional.of(info.getInitializationVector());
 
 				File file = new File(downloadDir.getPath());
+				symmetricEncryption.setKey(info.getSessionKey());
 				byte[] decrypted = symmetricEncryption.decrypt(data.getPayload(), info.getEncryptionMode(), iv);
 				FileUtils.writeByteArrayToFile(file, decrypted);
 
