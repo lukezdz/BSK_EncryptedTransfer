@@ -84,6 +84,7 @@ public class AsymmetricEncryption {
 
 	private byte[] performOperation(Cipher cipher, byte[] data, String operation) throws EncryptionFailedException {
 		try {
+			System.out.println("Cipher algorithm: " + cipher.getAlgorithm());
 			return cipher.doFinal(data);
 		} catch (BadPaddingException e) {
 			throw new EncryptionFailedException(operation + " failed. Bad padding:\n" + e.getMessage());
