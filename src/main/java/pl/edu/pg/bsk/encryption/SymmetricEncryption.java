@@ -7,14 +7,12 @@ import pl.edu.pg.bsk.exceptions.EncryptionFailedException;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.util.Optional;
 
 public class SymmetricEncryption {
@@ -27,25 +25,6 @@ public class SymmetricEncryption {
 
 	public SymmetricEncryption(SecretKey key) {
 		this.key = key;
-	}
-
-	public static SecretKey getRandomSecureKey(KeySize keySize) {
-		KeyGenerator generator;
-		try {
-			generator = KeyGenerator.getInstance("AES");
-		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
-			return null;
-		}
-
-		generator.init(keySize.getSize());
-		return generator.generateKey();
-	}
-
-	public static IvParameterSpec generateInitializationVector() {
-		byte[] iv = new byte[16];
-		new SecureRandom().nextBytes(iv);
-		return new IvParameterSpec(iv);
 	}
 
 	public byte[] encrypt(byte[] data, EncryptionMode mode, Optional<IvParameterSpec> iv) throws EncryptionFailedException {
@@ -64,7 +43,7 @@ public class SymmetricEncryption {
 
 		try {
 			cipher = Cipher.getInstance(algorithm.getMode());
-			if (iv.isPresent()) {
+			if (algorithm.needsInitializationVector()) {
 				cipher.init(cipherMode, key, iv.get());
 			} else {
 				cipher.init(cipherMode, key);

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane prefHeight="185.0" prefWidth="350.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="pl.edu.pg.bsk.controllers.KeysGenerationDialogController">
+   <children>
+      <PasswordField fx:id="passwordField" layoutX="14.0" layoutY="142.0" prefHeight="25.0" prefWidth="169.0" AnchorPane.bottomAnchor="18.0" AnchorPane.leftAnchor="14.0" />
+      <TextField fx:id="privateKeyTextField" layoutX="14.0" layoutY="49.0" prefHeight="25.0" prefWidth="243.0" AnchorPane.leftAnchor="14.0" AnchorPane.topAnchor="49.0" />
+      <TextField fx:id="publicKeyTextField" layoutX="14.0" layoutY="49.0" prefHeight="25.0" prefWidth="243.0" AnchorPane.leftAnchor="14.0" AnchorPane.topAnchor="49.0" />
+      <Button fx:id="publicKeyLocationButton" layoutX="269.0" layoutY="49.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="67.0" text="Location" AnchorPane.rightAnchor="14.0" AnchorPane.topAnchor="49.0" />
+      <Button fx:id="privateKeyLocationButton" layoutX="269.0" layoutY="49.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="67.0" text="Location" AnchorPane.rightAnchor="14.0" AnchorPane.topAnchor="49.0" />
+      <Button fx:id="nextButton" layoutX="269.0" layoutY="142.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="67.0" text="Next" AnchorPane.bottomAnchor="18.0" AnchorPane.rightAnchor="14.0" />
+      <Button fx:id="saveButton" layoutX="269.0" layoutY="142.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="67.0" text="Save" AnchorPane.bottomAnchor="18.0" AnchorPane.rightAnchor="14.0" />
+      <Button fx:id="previousButton" layoutX="194.0" layoutY="142.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="67.0" text="Previous" AnchorPane.bottomAnchor="18.0" AnchorPane.rightAnchor="89.0" />
+      <Label fx:id="passwordLabel" layoutX="14.0" layoutY="125.0" text="Password" AnchorPane.bottomAnchor="43.0" AnchorPane.leftAnchor="14.0" />
+      <Label fx:id="infoLabel" layoutX="14.0" layoutY="8.0" prefHeight="25.0" prefWidth="322.0" text="Label" wrapText="true" AnchorPane.leftAnchor="14.0" AnchorPane.topAnchor="8.0" />
+      <Label fx:id="privateDirectoryLabel" alignment="TOP_LEFT" layoutX="14.0" layoutY="84.0" prefHeight="44.0" prefWidth="322.0" text="Not selected" wrapText="true" />
+      <Label fx:id="publicDirectoryLabel" alignment="TOP_LEFT" layoutX="14.0" layoutY="84.0" prefHeight="44.0" prefWidth="322.0" text="Not selected" wrapText="true" />
+   </children>
+</AnchorPane>

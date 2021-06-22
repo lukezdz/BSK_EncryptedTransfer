@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane prefHeight="458.0" prefWidth="623.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="pl.edu.pg.bsk.controllers.MainUIController">
+   <children>
+      <MenuBar layoutY="2.0" prefHeight="25.0" prefWidth="623.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+        <menus>
+          <Menu mnemonicParsing="false" text="Keys">
+            <items>
+               <MenuItem fx:id="keysMenuGenerate" mnemonicParsing="false" text="Generate" />
+               <MenuItem fx:id="keysMenuSelect" mnemonicParsing="false" text="Select" />
+               <MenuItem fx:id="keysMenuAbout" mnemonicParsing="false" text="About" />
+            </items>
+          </Menu>
+          <Menu mnemonicParsing="false" text="Settings">
+               <items>
+                  <MenuItem fx:id="settingsMenuDownloadDirectory" mnemonicParsing="false" text="Select download directory" />
+                  <Menu fx:id="settingsMenuAESEncryption" mnemonicParsing="false" text="AES Encryption Mode" />
+               </items></Menu>
+          <Menu mnemonicParsing="false" text="Help">
+            <items>
+               <MenuItem fx:id="helpMenuAbout" mnemonicParsing="false" text="About" />
+            </items>
+          </Menu>
+        </menus>
+      </MenuBar>
+      <Button fx:id="sendButton" layoutX="380.0" layoutY="366.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="76.0" text="Send" AnchorPane.bottomAnchor="67.0" AnchorPane.rightAnchor="167.0" />
+      <Button fx:id="sendFileButton" layoutX="380.0" layoutY="392.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="76.0" text="Send file" AnchorPane.bottomAnchor="41.0" AnchorPane.rightAnchor="167.0" />
+      <TextArea fx:id="messageTextArea" layoutX="14.0" layoutY="289.0" prefHeight="51.0" prefWidth="363.0" promptText="Your message..." wrapText="true" AnchorPane.bottomAnchor="41.0" AnchorPane.leftAnchor="14.0" AnchorPane.rightAnchor="246.0" />
+      <ChoiceBox fx:id="modeChoiceBox" layoutX="460.0" layoutY="392.0" prefWidth="150.0" AnchorPane.bottomAnchor="41.0" AnchorPane.rightAnchor="13.0" />
+      <Label layoutX="461.0" layoutY="370.0" prefHeight="17.0" prefWidth="150.0" text="AES encryption mode:" AnchorPane.bottomAnchor="71.0" AnchorPane.rightAnchor="12.0" />
+      <ProgressBar fx:id="progressBar" layoutX="380.0" layoutY="439.0" prefHeight="11.0" prefWidth="163.0" progress="0.0" AnchorPane.bottomAnchor="8.0" AnchorPane.rightAnchor="167.0" />
+      <Label fx:id="statusInfoLabel" layoutX="14.0" layoutY="346.0" prefHeight="17.0" prefWidth="163.0" text="Status: Offline" AnchorPane.bottomAnchor="10.0" AnchorPane.leftAnchor="14.0" />
+      <ListView fx:id="contactsListView" layoutX="460.0" layoutY="39.0" prefHeight="257.0" prefWidth="150.0" AnchorPane.bottomAnchor="162.0" AnchorPane.rightAnchor="13.0" AnchorPane.topAnchor="39.0" />
+      <Button fx:id="addContactButton" layoutX="460.0" layoutY="332.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="150.0" text="Add contact" AnchorPane.bottomAnchor="101.0" AnchorPane.rightAnchor="13.0" />
+      <TextArea fx:id="chatTextArea" editable="false" layoutX="14.0" layoutY="39.0" prefHeight="318.0" prefWidth="442.0" wrapText="true" AnchorPane.bottomAnchor="101.0" AnchorPane.leftAnchor="14.0" AnchorPane.rightAnchor="167.0" AnchorPane.topAnchor="39.0" />
+      <TextField fx:id="contactTextField" layoutX="461.0" layoutY="302.0" prefHeight="25.0" prefWidth="149.0" promptText="IP address" AnchorPane.bottomAnchor="131.0" AnchorPane.rightAnchor="13.0" />
+   </children>
+</AnchorPane>
