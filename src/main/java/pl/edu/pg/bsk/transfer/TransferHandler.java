@@ -6,7 +6,6 @@ import lombok.Setter;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.json.simple.parser.ParseException;
 import pl.edu.pg.bsk.controllers.ControllerNotification;
 import pl.edu.pg.bsk.controllers.NotifiableController;
 import pl.edu.pg.bsk.encryption.AsymmetricEncryption;
@@ -125,7 +124,7 @@ public class TransferHandler extends Thread {
 	}
 
 	public void receiveData(TransferData data, InetAddress address)
-			throws ParseException, EncryptionFailedException, IOException, NoSuchAlgorithmException, InvalidKeySpecException {
+			throws EncryptionFailedException, IOException, NoSuchAlgorithmException, InvalidKeySpecException {
 		Metadata metadata = data.getMetadata();
 		System.out.println("Receive data - metadata: " + metadata.getType());
 

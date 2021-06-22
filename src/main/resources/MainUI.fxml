@@ -17,7 +17,6 @@
           <Menu mnemonicParsing="false" text="Settings">
                <items>
                   <MenuItem fx:id="settingsMenuDownloadDirectory" mnemonicParsing="false" text="Select download directory" />
-                  <Menu fx:id="settingsMenuAESEncryption" mnemonicParsing="false" text="AES Encryption Mode" />
                </items></Menu>
           <Menu mnemonicParsing="false" text="Help">
             <items>

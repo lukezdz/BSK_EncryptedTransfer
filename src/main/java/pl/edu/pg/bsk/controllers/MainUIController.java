@@ -14,7 +14,6 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
-import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.TextArea;
@@ -49,7 +48,6 @@ public class MainUIController extends NotifiableController {
 	@FXML private MenuItem keysMenuSelect;
 	@FXML private MenuItem keysMenuAbout;
 	@FXML private MenuItem settingsMenuDownloadDirectory;
-	@FXML private Menu settingsMenuAESEncryption;
 	@FXML private MenuItem helpMenuAbout;
 
 	@FXML private TextArea messageTextArea;

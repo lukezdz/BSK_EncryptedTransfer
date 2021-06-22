@@ -1,7 +1,6 @@
 package pl.edu.pg.bsk.transfer;
 
 import lombok.SneakyThrows;
-import org.json.simple.parser.ParseException;
 import pl.edu.pg.bsk.exceptions.EncryptionFailedException;
 
 import java.io.IOException;
@@ -11,7 +10,6 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
-import java.util.Arrays;
 
 public class ConnectionThread extends Thread {
 	private final TransferHandler handler;
@@ -38,7 +36,7 @@ public class ConnectionThread extends Thread {
 					System.out.println("Received data from " + socket.getInetAddress());
 					handler.receiveData(data, socket.getInetAddress());
 				}
-			} catch (IOException | ParseException | EncryptionFailedException | NoSuchAlgorithmException | InvalidKeySpecException exception) {
+			} catch (IOException | EncryptionFailedException | NoSuchAlgorithmException | InvalidKeySpecException exception) {
 				System.out.println("Closing socket:");
 				exception.printStackTrace();
 				socket.close();
