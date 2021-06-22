@@ -85,8 +85,9 @@ public class TransferData {
 		JSONObject formatted = new JSONObject();
 		Gson gson = new Gson();
 		String metadataJson = gson.toJson(metadata);
+		String dataJson = gson.toJson(data);
 		formatted.put(METADATA, metadataJson);
-		formatted.put(BODY, data);
+		formatted.put(BODY, dataJson);
 
 		return formatted.toJSONString().getBytes(StandardCharsets.UTF_8);
 	}
@@ -98,8 +99,9 @@ public class TransferData {
 
 		Gson gson = new Gson();
 		Type metadataType = new TypeToken<Metadata>() {}.getType();
+		Type dataType = new TypeToken<byte[]>() {}.getType();
 		Metadata metadata = gson.fromJson((String) parsed.get(METADATA), metadataType);
-		byte[] data = (byte[]) parsed.get(BODY);
+		byte[] data = gson.fromJson((String) parsed.get(BODY), dataType);
 
 		ReadTransferData read = new ReadTransferData(metadata);
 		read.setData(data);
