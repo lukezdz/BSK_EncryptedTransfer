@@ -43,17 +43,21 @@ public class TransferData {
 		Metadata metadata = new Metadata(Metadata.MetadataType.HANDSHAKE);
 		metadata.setHandshakePart(1);
 		metadata.setTransferType(transferType);
-		formatted.put(METADATA, metadata);
-		formatted.put(BODY, publicKey.getEncoded());
+		Gson gson = new Gson();
+		String metadataJson = gson.toJson(metadata);
+		String dataJson = gson.toJson(publicKey.getEncoded());
+		formatted.put(METADATA, metadataJson);
+		formatted.put(BODY, dataJson);
 
 		return formatted.toJSONString().getBytes(StandardCharsets.UTF_8);
 	}
 
 	public static byte[] getPartTwoHandshakeBody(SecretKey secretKey, IvParameterSpec iv, EncryptionMode mode) {
 		JSONObject body = new JSONObject();
-		body.put(BODY_SECRET_KEY, secretKey);
-		body.put(BODY_IV, iv);
-		body.put(BODY_ENCRYPTION_MODE, mode);
+		Gson gson = new Gson();
+		body.put(BODY_SECRET_KEY, gson.toJson(secretKey));
+		body.put(BODY_IV, gson.toJson(iv));
+		body.put(BODY_ENCRYPTION_MODE, gson.toJson(mode));
 
 		return body.toJSONString().getBytes(StandardCharsets.UTF_8);
 	}
@@ -63,8 +67,9 @@ public class TransferData {
 		Metadata metadata = new Metadata(Metadata.MetadataType.HANDSHAKE);
 		metadata.setHandshakePart(2);
 		metadata.setTransferType(transferType);
-		formatted.put(METADATA, metadata);
-		formatted.put(BODY, encrypted);
+		Gson gson = new Gson();
+		formatted.put(METADATA, gson.toJson(metadata));
+		formatted.put(BODY, gson.toJson(encrypted));
 
 		return formatted.toJSONString().getBytes(StandardCharsets.UTF_8);
 	}
@@ -74,9 +79,14 @@ public class TransferData {
 		String str = new String(decrypted);
 		JSONObject parsed = (JSONObject) parser.parse(str);
 
-		SecretKey secretKey = (SecretKey) parsed.get(BODY_SECRET_KEY);
-		IvParameterSpec iv = (IvParameterSpec) parsed.get(BODY_IV);
-		EncryptionMode mode = (EncryptionMode) parsed.get(BODY_ENCRYPTION_MODE);
+		Gson gson = new Gson();
+		Type secretKeyType = new TypeToken<SecretKey>() {}.getType();
+		Type ivType = new TypeToken<IvParameterSpec>() {}.getType();
+		Type modeType = new TypeToken<EncryptionMode>() {}.getType();
+
+		SecretKey secretKey = gson.fromJson((String) parsed.get(BODY_SECRET_KEY), secretKeyType);
+		IvParameterSpec iv = gson.fromJson((String) parsed.get(BODY_IV), ivType);
+		EncryptionMode mode = gson.fromJson((String) parsed.get(BODY_ENCRYPTION_MODE), modeType);
 
 		return new SessionInfo(secretKey, mode, iv);
 	}
@@ -86,6 +96,8 @@ public class TransferData {
 		Gson gson = new Gson();
 		String metadataJson = gson.toJson(metadata);
 		String dataJson = gson.toJson(data);
+		System.out.println("Metadata json: " + metadataJson);
+		System.out.println("Data json: " + dataJson);
 		formatted.put(METADATA, metadataJson);
 		formatted.put(BODY, dataJson);
 
