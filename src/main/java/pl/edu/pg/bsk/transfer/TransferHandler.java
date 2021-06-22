@@ -51,7 +51,7 @@ public class TransferHandler extends Thread {
 	private final Map<InetAddress, ConnectionThread> connections = new HashMap<>();
 	private final SymmetricEncryption symmetricEncryption =
 			new SymmetricEncryption(EncryptionUtils.getRandomSecureKey(KeySize.K_128));
-	private final AsymmetricEncryption asymmetricEncryption;
+	private AsymmetricEncryption asymmetricEncryption;
 	private final ServerSocket serverSocket = new ServerSocket(SERVER_PORT);
 	private final NotifiableController myController;
 
@@ -77,6 +77,10 @@ public class TransferHandler extends Thread {
 			connections.put(address, thread);
 			thread.start();
 		}
+	}
+
+	public void setKeyPair(KeyPair keyPair) {
+		asymmetricEncryption = new AsymmetricEncryption(keyPair);
 	}
 
 	/**
@@ -178,8 +182,10 @@ public class TransferHandler extends Thread {
 					if (metadata.getTransferType() == Metadata.TransferType.REQUEST) {
 						byte[] keyBytesToEncode = HandshakeComplexBody.serializeKey(sessionInfo.getSessionKey());
 						byte[] ivBytesToEncode = HandshakeComplexBody.serializeIv(sessionInfo.getInitializationVector());
-						byte[] encodedKey = asymmetricEncryption.encryptWithPublic(keyBytesToEncode, publicKeys.get(address));
-						byte[] encodedIv = asymmetricEncryption.encryptWithPublic(ivBytesToEncode, publicKeys.get(address));
+//						byte[] encodedKey = asymmetricEncryption.encryptWithPublic(keyBytesToEncode, publicKeys.get(address));
+//						byte[] encodedIv = asymmetricEncryption.encryptWithPublic(ivBytesToEncode, publicKeys.get(address));
+						byte[] encodedKey = asymmetricEncryption.encryptWithPublic(keyBytesToEncode, asymmetricEncryption.getPublicKey());
+						byte[] encodedIv = asymmetricEncryption.encryptWithPublic(ivBytesToEncode, asymmetricEncryption.getPublicKey());
 
 						HandshakeComplexBody responseBody = new HandshakeComplexBody(encodedKey, encodedIv, sessionInfo.getEncryptionMode());
 						TransferData response = TransferData.getPartTwoHandshakeData(
@@ -228,16 +234,22 @@ public class TransferHandler extends Thread {
 			}
 		};
 
-		handshakeTask.setOnSucceeded(workerStateEvent -> {
+		if (handshakeTask != null) {
+			handshakeTask.setOnSucceeded(workerStateEvent -> {
+				sendingTask.run();
+			});
+			handshakeTask.setOnFailed(workerStateEvent -> {
+				Alert alert = new Alert(Alert.AlertType.ERROR);
+				alert.setTitle("Error");
+				alert.setHeaderText("Handshake failed");
+				alert.setContentText(workerStateEvent.getSource().getException().getMessage());
+				alert.showAndWait();
+			});
+		}
+		else {
 			sendingTask.run();
-		});
-		handshakeTask.setOnFailed(workerStateEvent -> {
-			Alert alert = new Alert(Alert.AlertType.ERROR);
-			alert.setTitle("Error");
-			alert.setHeaderText("Handshake failed");
-			alert.setContentText(workerStateEvent.getSource().getException().getMessage());
-			alert.showAndWait();
-		});
+		}
+
 		return sendingTask;
 	}
 

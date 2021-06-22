@@ -161,9 +161,14 @@ public class MainUIController extends NotifiableController {
 			statusInfoLabel.setText(OFFLINE);
 			selectedKeyPair = KeyPairWrapper.getInstance().getPair();
 			try {
-				transferHandler = new TransferHandler(this, selectedKeyPair);
-				transferHandler.start();
-				statusInfoLabel.setText(READY);
+				if (transferHandler != null) {
+					transferHandler.setKeyPair(selectedKeyPair);
+				}
+				else {
+					transferHandler = new TransferHandler(this, selectedKeyPair);
+					transferHandler.start();
+					statusInfoLabel.setText(READY);
+				}
 			} catch (IOException e) {
 				Alert alert = getQuickDialog(Alert.AlertType.ERROR, "Error", "Failed to initialize server",
 						"There was a problem with creating a server to receive messages from other users. Check if your port "
