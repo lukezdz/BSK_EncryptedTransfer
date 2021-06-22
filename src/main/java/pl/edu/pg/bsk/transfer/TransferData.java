@@ -1,5 +1,8 @@
 package pl.edu.pg.bsk.transfer;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.reflect.TypeToken;
 import lombok.Getter;
 import lombok.Setter;
 import org.json.simple.JSONObject;
@@ -9,6 +12,7 @@ import pl.edu.pg.bsk.encryption.EncryptionMode;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
+import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.security.PublicKey;
 
@@ -79,7 +83,9 @@ public class TransferData {
 
 	public static byte[] getTransferData(byte[] data, Metadata metadata) {
 		JSONObject formatted = new JSONObject();
-		formatted.put(METADATA, metadata);
+		Gson gson = new Gson();
+		String metadataJson = gson.toJson(metadata);
+		formatted.put(METADATA, metadataJson);
 		formatted.put(BODY, data);
 
 		return formatted.toJSONString().getBytes(StandardCharsets.UTF_8);
@@ -90,7 +96,9 @@ public class TransferData {
 		String str = new String(transferData);
 		JSONObject parsed = (JSONObject) parser.parse(str);
 
-		Metadata metadata = (Metadata) parsed.get(METADATA);
+		Gson gson = new Gson();
+		Type metadataType = new TypeToken<Metadata>() {}.getType();
+		Metadata metadata = gson.fromJson((String) parsed.get(METADATA), metadataType);
 		byte[] data = (byte[]) parsed.get(BODY);
 
 		ReadTransferData read = new ReadTransferData(metadata);
