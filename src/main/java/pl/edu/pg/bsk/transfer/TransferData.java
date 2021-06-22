@@ -67,7 +67,8 @@ public class TransferData {
 
 	public static SessionInfo parsePartTwoHandshakeData(byte[] decrypted) throws ParseException {
 		JSONParser parser = new JSONParser();
-		JSONObject parsed = (JSONObject) parser.parse(new String(decrypted));
+		String str = new String(decrypted);
+		JSONObject parsed = (JSONObject) parser.parse(str);
 
 		SecretKey secretKey = (SecretKey) parsed.get(BODY_SECRET_KEY);
 		IvParameterSpec iv = (IvParameterSpec) parsed.get(BODY_IV);
@@ -86,7 +87,8 @@ public class TransferData {
 
 	public static ReadTransferData readTransferData(byte[] transferData) throws ParseException {
 		JSONParser parser = new JSONParser();
-		JSONObject parsed = (JSONObject) parser.parse(new String(transferData));
+		String str = new String(transferData);
+		JSONObject parsed = (JSONObject) parser.parse(str);
 
 		Metadata metadata = (Metadata) parsed.get(METADATA);
 		byte[] data = (byte[]) parsed.get(BODY);
