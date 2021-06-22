@@ -43,7 +43,7 @@ public class SymmetricEncryption {
 
 		try {
 			cipher = Cipher.getInstance(algorithm.getMode());
-			if (iv.isPresent()) {
+			if (algorithm.needsInitializationVector()) {
 				cipher.init(cipherMode, key, iv.get());
 			} else {
 				cipher.init(cipherMode, key);

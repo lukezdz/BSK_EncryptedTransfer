@@ -132,8 +132,8 @@ public class TransferHandler extends Thread {
 		switch (metadata.getType()) {
 			case MESSAGE: {
 				SessionInfo info = sessionInfos.get(address);
-				Optional<IvParameterSpec> iv = info.getEncryptionMode() == EncryptionMode.AES_ECB ?
-						Optional.empty() : Optional.of(info.getInitializationVector());
+				Optional<IvParameterSpec> iv = info.getEncryptionMode().needsInitializationVector() ?
+						Optional.of(info.getInitializationVector()) : Optional.empty();
 
 				symmetricEncryption.setKey(info.getSessionKey());
 				String message = new String(symmetricEncryption.decrypt(
@@ -214,7 +214,6 @@ public class TransferHandler extends Thread {
 			@Override
 			protected Void call() throws Exception {
 				SessionInfo info = sessionInfos.get(address);
-				symmetricEncryption.setKey(info.getSessionKey());
 
 				symmetricEncryption.setKey(info.getSessionKey());
 				Optional<IvParameterSpec> iv = encryptionMode.needsInitializationVector() ?
